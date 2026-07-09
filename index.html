@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfa Battery Pro - Enterprise ERP</title>
+    <style>
+        :root {
+            --primary-color: #0f172a;
+            --secondary-color: #2563eb;
+            --accent-color: #f59e0b;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --purple: #8b5cf6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        #sidebar { width: 280px; background-color: var(--primary-color); color: white; display: flex; flex-direction: column; transition: all 0.3s; z-index: 10; }
+        .sidebar-brand { padding: 20px; font-size: 20px; font-weight: bold; text-align: center; background: rgba(0,0,0,0.2); letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-menu { list-style: none; padding: 10px 0; flex: 1; overflow-y: auto; }
+        .sidebar-menu li { padding: 10px 20px; cursor: pointer; display: flex; align-items: center; transition: 0.2s; font-size: 14px; border-left: 4px solid transparent; }
+        .sidebar-menu li:hover, .sidebar-menu li.active { background: rgba(255,255,255,0.1); border-left-color: var(--secondary-color); }
+
+        #main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        header { background: var(--card-bg); padding: 15px 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .header-title { font-size: 18px; font-weight: 600; }
+        .content-body { padding: 25px; flex: 1; overflow-y: auto; }
+
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .card { background: var(--card-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px;}
+        .card-title { font-size: 13px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
+        .card-value { font-size: 22px; font-weight: bold; }
+        
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; justify-content: center;}
+        .btn-primary { background: var(--secondary-color); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--accent-color); color: white; }
+        .btn-purple { background: var(--purple); color: white; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 6px; overflow: hidden; margin-bottom: 20px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+        th { background-color: #f1f5f9; color: var(--text-main); font-weight: 600; }
+        tr:hover { background-color: #f8fafc; }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; }
+        .form-control { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; background: #fff !important; opacity: 1 !important; color: #000 !important; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 600px; max-width: 90%; max-height: 90vh; overflow-y: auto; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-danger { background: #fee2e2; color: var(--danger); }
+        .badge-success { background: #dcfce7; color: var(--success); }
+
+        .stock-alert-container { background: #ffebe6; border-left: 5px solid var(--danger); padding: 15px; margin-bottom: 20px; border-radius: 4px; display: none; }
+        .stock-alert-title { color: var(--danger); font-weight: bold; font-size: 15px; margin-bottom: 5px; }
+        .stock-alert-list { font-size: 13px; color: #333; padding-left: 20px; list-style-type: none; }
+        .stock-alert-list li { padding: 5px 0; cursor: pointer; transition: 0.2s; border-radius: 4px; }
+        .stock-alert-list li:hover { background: #ffd6cc; padding-left: 5px; }
+
+        .credit-alert-container { background: #fffbeb; border-left: 5px solid var(--accent-color); padding: 15px; margin-bottom: 20px; border-radius: 4px; display: none; }
+        .credit-alert-title { color: #b45309; font-weight: bold; font-size: 15px; margin-bottom: 5px; }
+        .credit-alert-list { font-size: 13px; color: #333; padding-left: 20px; list-style-type: none; }
+
+        .ledger-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 15px; }
+        .dealer-info-banner { background: #eff6ff; border-left: 4px solid var(--secondary-color); padding: 12px; border-radius: 4px; margin-bottom: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 13px; }
+        .dealer-info-banner strong { color: #1e40af; }
+        .ledger-main-table td[contenteditable="true"] { background-color: #ffffff; border: 1px dashed var(--secondary-color); outline: none; }
+        .ledger-main-table td[contenteditable="true"]:focus { background-color: #f0fdf4; border: 1px solid var(--success); }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        #invoice-print-area { display: none; background: white; color: black; padding: 30px; width: 210mm; font-family: 'Courier New', Courier, monospace; }
+        @media print {
+            body * { visibility: hidden; }
+            #invoice-print-area, #invoice-print-area * { visibility: visible; }
+            #invoice-print-area { position: absolute; left: 0; top: 0; display: block !important; width: 100%; }
+        }
+        select[multiple] option:checked { background: #cbd5e1 !important; color: black !important; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="sidebar-brand">ALFA ENTERPRISE</div>
+        <ul class="sidebar-menu">
+            <li class="active" id="nav-dashboard" onclick="switchView('dashboard')">📊 Commercial Dashboard</li>
+            <li id="nav-gst-track" onclick="switchView('gst-track')">📊 Monthly GST Volume Track</li>
+            <li id="nav-inventory" onclick="switchView('inventory')">📦 Products & HSN Ledger</li>
+            <li id="nav-billing-gst" onclick="switchView('billing-gst')">🧾 GST Tax Invoice Counter</li>
+            <li id="nav-billing-non-gst" onclick="switchView('billing-non-gst')">📄 Non-GST Retail Counter</li>
+            <li id="nav-quotation" onclick="switchView('quotation')">📋 GST Quotation Desk</li>
+            <li id="nav-invoice-logs" onclick="switchView('invoice-logs')">🪵 Historical Split Repositories</li>
+            <li id="nav-warranty-desk" onclick="switchView('warranty-desk')">🛡️ Warranty Swap Desk</li>
+            <li id="nav-replacement-logs" onclick="switchView('replacement-logs')">🪵 Swap History Log</li>
+            <li id="nav-ledger" onclick="switchView('ledger')">👥 Corporate Dealer Ledger</li>
+            <li id="nav-settings" onclick="switchView('settings')">⚙️ System Cloud Backups</li>
+        </ul>
+    </div>
+
+    <div id="main-content">
+        <header>
+            <div class="header-title" id="page-title">Commercial Dashboard</div>
+            <div style="font-weight: 600; color: var(--text-muted);" id="live-clock"></div>
+        </header>
+
+        <div class="content-body">
+            
+            <div id="dashboard" class="view-section active">
+                <div id="dashboard-stock-alert" class="stock-alert-container">
+                    <div class="stock-alert-title">⚠️ LOW STOCK ALERT / INVENTORY RUNOUT:</div>
+                    <ul id="dashboard-stock-alert-list" class="stock-alert-list"></ul>
+                </div>
+
+                <div id="dashboard-credit-alert" class="credit-alert-container">
+                    <div class="credit-alert-title">⚠️ CRITICAL OVERDUE OUTSTANDINGS / UDHARI TIME LIMIT EXPIRED ALERTS:</div>
+                    <ul id="dashboard-credit-alert-list" class="credit-alert-list"></ul>
+                </div>
+
+                <div class="grid-4">
+                    <div class="card" style="border-top: 4px solid var(--secondary-color);">
+                        <div class="card-title">Live Dynamic Products Registered</div>
+                        <div class="card-value" id="dash-total-products">0</div>
+                    </div>
+                    <div class="card" style="border-top: 4px solid var(--success);">
+                        <div class="card-title">Gross Valuation Yield</div>
+                        <div class="card-value" id="dash-sales-summary">₹0.00</div>
+                    </div>
+                    <div class="card" style="border-top: 4px solid var(--purple);">
+                        <div class="card-title">Swaps Disbursed</div>
+                        <div class="card-value" id="dash-total-swaps">0 Units</div>
+                    </div>
+                    <div class="card" style="border-top: 4px solid var(--accent-color);">
+                        <div class="card-title">Dealer Accounts</div>
+                        <div class="card-value" id="dash-total-dealers">0</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4>Recent Consolidated Log Execution Registry</h4>
+                    <table id="dash-recent-sales-table">
+                        <thead>
+                            <tr>
+                                <th>Customer GSTIN Log</th>
+                                <th>GST Bill (No GSTIN Input)</th>
+                                <th>Non-GST Retail Bills</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="gst-track" class="view-section">
+                <div class="card" style="border-top: 4px solid var(--success);">
+                    <h4 style="margin-bottom:15px;">🗓️ Monthly GST Volume History Registry</h4>
+                    <div id="monthly-gst-breakdown-list" style="font-size:14px; line-height:2;"></div>
+                </div>
+            </div>
+
+            <div id="inventory" class="view-section">
+                <div class="flex-between" style="margin-bottom: 15px;">
+                    <input type="text" id="inventory-search" class="form-control" style="width: 60%;" placeholder="Search parameters via model, brand, specification..." oninput="renderInventory()">
+                    <button class="btn btn-primary" onclick="openAddProductModal()">+ Create Master Product Line</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>HSN Code</th><th>Category</th><th>Brand Variant</th><th>Core Specs</th><th>Warranty Plan</th><th>Price Unit</th><th>Alert Limit</th><th>Available Stock</th><th>Stock Alteration</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="inventory-table-body"></tbody>
+                </table>
+            </div>
+
+            <div id="billing-gst" class="view-section">
+                <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 20px;">
+                    <div class="card" style="border-top: 4px solid var(--secondary-color);">
+                        <div class="flex-between">
+                            <h4>GST Corporate Tax Invoice Desk</h4>
+                            <div style="display: flex; gap: 10px;">
+                                <div class="form-group" style="width: 110px; margin-bottom: 0;"><label>Invoice No.</label><input type="number" id="bill-gst-invnum" class="form-control"></div>
+                                <div class="form-group" style="width: 140px; margin-bottom: 0;"><label>Bill Date</label><input type="date" id="bill-gst-date" class="form-control"></div>
+                            </div>
+                        </div><br>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group"><label>Customer Name / Firm</label><input type="text" id="bill-cust-name" class="form-control"></div>
+                            <div class="form-group"><label>Mobile Phone Line</label><input type="text" id="bill-cust-phone" class="form-control"></div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1.5fr 1.5fr; gap: 10px;">
+                            <div class="form-group"><label>Customer GSTIN Code (B2B)</label><input type="text" id="bill-cust-gstin" class="form-control" placeholder="23AAAAA0000A1Z5"></div>
+                            <div class="form-group"><label>Physical Street Address</label><input type="text" id="bill-cust-address" class="form-control"></div>
+                        </div>
+                        <hr style="margin:15px 0; border-color:var(--border-color)">
+                        
+                        <div class="form-group" style="background: #f1f5f9; padding: 8px; border-radius: 4px; margin-bottom: 10px;">
+                            <label style="font-weight: bold; color: var(--secondary-color);">🔍 Search Product Element Line:</label>
+                            <input type="text" id="gst-product-search-input" class="form-control" placeholder="Type brand, model or spec to filter dropdown..." oninput="filterProductDropdown('gst')">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1.5fr 1fr 0.8fr 1fr; gap: 10px;">
+                            <div class="form-group"><label>Product Element</label><select id="bill-product-select" class="form-control" onchange="updateSerialDropdown('gst')"></select></div>
+                            <div class="form-group"><label>No. of Prods (Qty)</label><input type="number" id="bill-qty" class="form-control" value="1" min="1" oninput="autoSelectSerialsBasedOnQty('gst')"></div>
+                            <div class="form-group"><label>Unit Price (₹)</label><input type="number" id="bill-price" class="form-control"></div>
+                            <div class="form-group"><label>Selected Serial(s)</label><select id="bill-serial-select" class="form-control" multiple style="height: 38px; overflow-y: auto; font-size:12px;"></select></div>
+                        </div>
+                        <button class="btn btn-primary" style="width:100%; margin-bottom:15px;" onclick="addItemToCart('gst')">+ Append Variant Product To Invoice Dataset</button>
+                        
+                        <h5>Draft Items Cart Matrix</h5>
+                        <table id="gst-cart-table">
+                            <thead><tr><th>Variant Model</th><th>HSN</th><th>Serial Key Tag</th><th>Price Unit</th><th>Qty</th><th>Total</th><th>Remove</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Calculated Fiscal Aggregations</h4><br>
+                        <div class="form-group">
+                            <label>Tax Protocol Selection</label>
+                            <select id="bill-tax-mode" class="form-control" onchange="autoCalculateGSTAndTotals()">
+                                <option value="CGST_SGST">Local (CGST 9% + SGST 9% Box Active)</option>
+                                <option value="IGST">Interstate Integration (IGST 18% Box Active)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label style="color:var(--danger)">📉 Old Battery Buy-Back Discount Value (₹)</label>
+                            <input type="number" id="bill-buyback" class="form-control" value="0" oninput="autoCalculateGSTAndTotals()">
+                        </div>
+                        <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 12px; border: 1px dashed var(--secondary-color);">
+                            <div class="form-group">
+                                <label style="font-weight: bold; color: var(--success);">💵 Received Amount / Jama Kiya (₹)</label>
+                                <input type="number" id="bill-gst-paid" class="form-control" value="0" oninput="autoCalculateGSTAndTotals()">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-weight: bold; color: var(--accent-color);">📅 Credit Days Site (Udhari Limit Time)</label>
+                                <select id="bill-gst-site" class="form-control">
+                                    <option value="0">0 Days (Hand to Hand Cash)</option>
+                                    <option value="10">10 Days Site</option>
+                                    <option value="15">15 Days Site</option>
+                                    <option value="30">30 Days Site</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>💳 Payment Mode</label>
+                                <select id="bill-gst-paymode" class="form-control">
+                                    <option value="Cash">Cash</option>
+                                    <option value="UPI">UPI</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                    <option value="Against Scrap">Against Scrap</option>
+                                </select>
+                            </div>
+                        </div>
+                        <hr style="margin:15px 0; border:0; border-top:1px solid var(--border-color)">
+                        <div class="flex-between" style="margin-bottom:8px;"><span>Aggregate Taxable Base:</span><span id="bill-subtotal">₹0.00</span></div>
+                        
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 10px; display: grid; gap: 10px;">
+                            <div class="form-group">
+                                <label style="color:var(--purple); font-weight: bold;">1. Total GST Value (18%) (₹)</label> <input type="number" id="input-total-gst" class="form-control" style="font-weight: bold; text-align: right;" oninput="manualTaxOverride('total')">
+                            </div>
+                            <div class="form-group" id="cgst-box-wrapper">
+                                <label style="color:var(--secondary-color);">2. CGST Amount (9%) (₹)</label> <input type="number" id="input-cgst" class="form-control" style="text-align: right;" oninput="manualTaxOverride('split')">
+                            </div>
+                            <div class="form-group" id="sgst-box-wrapper">
+                                <label style="color:var(--secondary-color);">3. SGST Amount (9%) (₹)</label> <input type="number" id="input-sgst" class="form-control" style="text-align: right;" oninput="manualTaxOverride('split')">
+                            </div>
+                            <div class="form-group" id="igst-box-wrapper" style="display: none;">
+                                <label style="color:var(--danger);">4. IGST Amount (18%) (₹)</label> <input type="number" id="input-igst" class="form-control" style="text-align: right;" oninput="manualTaxOverride('igst')">
+                            </div>
+                        </div>
+
+                        <div class="flex-between" style="margin-bottom:8px; color:var(--danger)"><span>Buy-Back Reduction:</span><span id="bill-buyback-disp">-₹0.00</span></div>
+                        <div class="flex-between" style="font-size: 16px; font-weight: bold;"><span>Grand Total:</span><span id="bill-grandtotal">₹0.00</span></div>
+                        <div class="flex-between" style="font-size: 16px; font-weight: bold; color: var(--success); margin-top:5px;"><span>Jama Kiya Amount:</span><span id="bill-total-jama">₹0.00</span></div>
+                        <div class="flex-between" style="font-size: 18px; font-weight: bold; color: var(--danger); margin-top:5px; border-top:1px dashed #cbd5e1; padding-top:5px;"><span>Baki Outstanding:</span><span id="bill-total-baki">₹0.00</span></div><br>
+                        
+                        <button class="btn btn-success" style="width: 100%; padding: 12px;" onclick="commitInvoiceExecution('gst')">🔒 Process & Print Legitimate GST Invoice</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="billing-non-gst" class="view-section">
+                <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 20px;">
+                    <div class="card" style="border-top: 4px solid var(--accent-color);">
+                        <div class="flex-between">
+                            <h4>Consumer Retail Slip Terminal</h4>
+                            <div style="display: flex; gap: 10px;">
+                                <div class="form-group" style="width: 110px; margin-bottom: 0;"><label>Invoice No.</label><input type="number" id="bill-nongst-invnum" class="form-control"></div>
+                                <div class="form-group" style="width: 140px; margin-bottom: 0;"><label>Bill Date</label><input type="date" id="bill-nongst-date" class="form-control"></div>
+                            </div>
+                        </div><br>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group"><label>Client Full Name</label><input type="text" id="nongst-cust-name" class="form-control"></div>
+                            <div class="form-group"><label>Mobile Network Field</label><input type="text" id="nongst-cust-phone" class="form-control"></div>
+                        </div>
+                        <div class="form-group"><label>Address Location</label><input type="text" id="nongst-cust-address" class="form-control"></div>
+                        <hr style="margin:15px 0; border-color:var(--border-color)">
+                        
+                        <div class="form-group" style="background: #f1f5f9; padding: 8px; border-radius: 4px; margin-bottom: 10px;">
+                            <label style="font-weight: bold; color: var(--accent-color);">🔍 Search Product Element Line:</label>
+                            <input type="text" id="nongst-product-search-input" class="form-control" placeholder="Type brand, model or spec to filter dropdown..." oninput="filterProductDropdown('nongst')">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1.5fr 1fr 0.8fr 1fr; gap: 10px;">
+                            <div class="form-group"><label>Product Element</label><select id="nongst-product-select" class="form-control" onchange="updateSerialDropdown('nongst')"></select></div>
+                            <div class="form-group"><label>No. of Prods (Qty)</label><input type="number" id="nongst-qty" class="form-control" value="1" min="1" oninput="autoSelectSerialsBasedOnQty('nongst')"></div>
+                            <div class="form-group"><label>Rate Unit (₹)</label><input type="number" id="nongst-price" class="form-control"></div>
+                            <div class="form-group"><label>Selected Serial(s)</label><select id="nongst-serial-select" class="form-control" multiple style="height: 38px; overflow-y: auto; font-size:12px;"></select></div>
+                        </div>
+                        <button class="btn btn-warning" style="width:100%; color:black; margin-bottom:15px;" onclick="addItemToCart('nongst')">+ Push Product Variant to Retail Stack</button>
+                        <table id="nongst-cart-table">
+                            <thead><tr><th>Variant Specs</th><th>HSN Mapping</th><th>Assigned Serial</th><th>Rate</th><th>Qty</th><th>Total</th><th>Action</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <h4>Retail Settlement Breakdown</h4><br>
+                        <div class="form-group">
+                            <label style="color:var(--danger)">📉 Buy-Back Value Evaluation (₹)</label>
+                            <input type="number" id="nongst-buyback" class="form-control" value="0" oninput="calculateCartTotals('nongst')">
+                        </div>
+                        <div style="background: #fdf6e2; padding: 10px; border-radius: 6px; margin-bottom: 12px; border: 1px dashed var(--accent-color);">
+                            <div class="form-group">
+                                <label style="font-weight: bold; color: var(--success);">💵 Received Amount / Jama Kiya (₹)</label>
+                                <input type="number" id="bill-nongst-paid" class="form-control" value="0" oninput="calculateCartTotals('nongst')">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-weight: bold; color: var(--accent-color);">📅 Credit Days Site (Udhari Limit Time)</label>
+                                <select id="bill-nongst-site" class="form-control">
+                                    <option value="0">0 Days (Cash)</option>
+                                    <option value="10">10 Days Site</option>
+                                    <option value="15">15 Days Site</option>
+                                    <option value="30">30 Days Site</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>💳 Payment Mode</label>
+                                <select id="bill-nongst-paymode" class="form-control">
+                                    <option value="Cash">Cash</option>
+                                    <option value="UPI">UPI</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                    <option value="Against Scrap">Against Scrap</option>
+                                </select>
+                            </div>
+                        </div>
+                        <hr style="margin:15px 0; border:0; border-top:1px solid var(--border-color)">
+                        <div class="flex-between" style="margin-bottom:8px;"><span>Gross Draft Matrix Total:</span><span id="nongst-sub-disp">₹0.00</span></div>
+                        <div class="flex-between" style="margin-bottom:8px; color:var(--danger)"><span>Buy-Back Salvage Subtraction:</span><span id="nongst-bb-disp">-₹0.00</span></div>
+                        <div class="flex-between" style="font-size: 16px; font-weight: bold;"><span>Grand Total Value:</span><span id="nongst-grandtotal">₹0.00</span></div>
+                        <div class="flex-between" style="font-size: 16px; font-weight: bold; color: var(--success); margin-top:5px;"><span>Jama Kiya Amount:</span><span id="nongst-total-jama">₹0.00</span></div>
+                        <div class="flex-between" style="font-size: 18px; font-weight: bold; color: var(--danger); margin-top:5px; border-top:1px dashed #cbd5e1; padding-top:5px;"><span>Baki Outstanding:</span><span id="nongst-total-baki">₹0.00</span></div><br>
+                        <button class="btn btn-warning" style="width: 100%; padding: 12px; color:black;" onclick="commitInvoiceExecution('nongst')">Generate Retail Consumer Invoice</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="quotation" class="view-section">
+                <div style="display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 20px;">
+                    <div class="card" style="border-top: 4px solid var(--purple);">
+                        <div class="flex-between">
+                            <h4>Proforma Projections & Corporate Quotation Desk</h4>
+                            <div class="form-group" style="width: 150px; margin-bottom: 0;"><label>Quote Date</label><input type="date" id="bill-quote-date" class="form-control"></div>
+                        </div><br>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                            <div class="form-group"><label>Prospect Account/Name</label><input type="text" id="quote-cust-name" class="form-control"></div>
+                            <div class="form-group"><label>Mobile No</label><input type="text" id="quote-cust-phone" class="form-control"></div>
+                            <div class="form-group"><label>Address Space</label><input type="text" id="quote-cust-address" class="form-control"></div>
+                        </div>
+                        <hr style="margin:15px 0; border-color:var(--border-color)">
+                        <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 0.8fr; gap: 10px;">
+                            <div class="form-group"><label>Target Model Category</label><select id="quote-product-select" class="form-control" onchange="updateQuotePriceField()"></select></div>
+                            <div class="form-group"><label>Base Value Offer (₹)</label><input type="number" id="quote-price" class="form-control"></div>
+                            <div class="form-group"><label>Tax Percentage (%)</label><select id="quote-gst-pct" class="form-control"><option value="18">Standard 18% GST</option><option value="28">High Tier 28% GST</option><option value="0">Exempted</option></select></div>
+                            <div class="form-group"><label>No. of Prods</label><input type="number" id="quote-qty" class="form-control" value="1" min="1"></div>
+                        </div>
+                        <button class="btn btn-purple" style="width:100%; margin-bottom:15px;" onclick="addItemToQuoteCart()">+ Append Item to Estimate Draft Sheet</button>
+                        <table id="quote-cart-table">
+                            <thead><tr><th>Target Model Description</th><th>HSN</th><th>Base Rate</th><th>Qty</th><th>Total</th><th>Estimated GST</th><th>Action</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <h4>Quotation Projection Matrix</h4><br>
+                        <div class="form-group">
+                            <label style="color:var(--danger)">📉 Proposed Buy-Back Recovery Value Deduction (₹)</label>
+                            <input type="number" id="quote-buyback" class="form-control" value="0" oninput="renderQuoteCartElements()">
+                        </div>
+                        <hr style="margin:15px 0; border:0; border-top:1px solid var(--border-color)">
+                        <div class="flex-between" style="margin-bottom:8px;"><span>Base Item Values Aggregation:</span><span id="quote-base-disp">₹0.00</span></div>
+                        <div class="flex-between" style="margin-bottom:8px;"><span>Projected GST Levies Asset:</span><span id="quote-tax-disp">₹0.00</span></div>
+                        <div class="flex-between" style="margin-bottom:8px; color:var(--danger)"><span>Buy-Back Offsets:</span><span id="quote-bb-disp">-₹0.00</span></div>
+                        <div class="flex-between" style="font-size: 20px; font-weight: bold; margin-top:15px; color:var(--purple)"><span>Net Proforma Total:</span><span id="quote-grandtotal">₹0.00</span></div><br>
+                        <button class="btn btn-purple" style="width:100%; padding:12px;" onclick="printQuotationSlip()">Generate Commercial Estimate Printout</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="invoice-logs" class="view-section">
+                <div class="card" style="border-top:4px solid var(--success)">
+                    <div class="flex-between" style="margin-bottom: 10px;">
+                        <h3>🏢 Category Space A: B2B Business Tax Invoice Registry</h3>
+                        <input type="text" id="b2b-search" class="form-control" style="width:35%" placeholder="Filter via Customer..." oninput="renderInvoiceLogsRegistryTable()">
+                    </div>
+                    <table id="b2b-registry-table">
+                        <thead><tr><th>Timestamp</th><th>Invoice Ref</th><th>Legal Name</th><th>Final Aggregate</th><th>Jama Kiya</th><th>Baki Amount</th><th>Actions</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div class="card" style="border-top:4px solid var(--accent-color)">
+                    <div class="flex-between" style="margin-bottom: 10px;">
+                        <h3>👤 Category Space B: B2C General Retail Consumer Logs</h3>
+                        <input type="text" id="b2c-search" class="form-control" style="width:35%" placeholder="Filter via Consumer contact..." oninput="renderInvoiceLogsRegistryTable()">
+                    </div>
+                    <table id="b2c-registry-table">
+                        <thead><tr><th>Timestamp</th><th>Slip ID</th><th>Consumer Name</th><th>Net Yield</th><th>Jama Kiya</th><th>Baki Amount</th><th>Actions</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="warranty-desk" class="view-section">
+                <div class="card" style="max-width: 850px; margin: 0 auto; border-top: 4px solid var(--danger);">
+                    <h4 style="color: var(--danger);">🛡️ Advanced Asset Warranty Replacement Desk</h4><br>
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 20px;">
+                        <label style="font-weight: 700; font-size: 13px; display: block; margin-bottom: 5px;">🔍 Lookup Live Repositories (Old Serial Validation Tag):</label>
+                        <div style="display:flex; gap: 10px;">
+                            <input type="text" id="replace-search-serial" class="form-control" placeholder="Input target serial designation key tag...">
+                            <button class="btn btn-danger" onclick="lookupOldFaultyBatterySerial()">Populate Fields</button>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div class="form-group"><label>Customer/Firm Designation</label><input type="text" id="warr-cust-name" class="form-control"></div>
+                        <div class="form-group"><label>Phone Network Field</label><input type="text" id="warr-cust-phone" class="form-control"></div>
+                        <div class="form-group"><label>Physical Street Address</label><input type="text" id="warr-cust-address" class="form-control"></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                        <div style="border: 1px dashed var(--danger); padding: 15px; border-radius: 6px; background: #fff5f5;">
+                            <h5 style="color: var(--danger); margin-bottom: 10px;">🛑 PURGED OLD ASSET SPECIFICATION</h5>
+                            <div class="form-group"><label>Old Faulty Serial Key Tag</label><input type="text" id="warr-old-serial" class="form-control"></div>
+                            <div class="form-group"><label>Model Category</label><select id="warr-product-select" class="form-control" onchange="updateWarrantyFreshStockDropdown()"></select></div>
+                        </div>
+                        <div style="border: 1px dashed var(--success); padding: 15px; border-radius: 6px; background: #f6fdf9;">
+                            <h5 style="color: var(--success); margin-bottom: 10px;">🟢 ALLOCATED FRESH REPLACEMENT</h5>
+                            <div class="form-group"><label>Select Available New Serial No</label><select id="warr-new-serial-select" class="form-control"></select></div>
+                            <div class="form-group"><label>Anomalous Remarks</label><input type="text" id="warr-remarks" class="form-control" value="Discharge Defect"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-success" style="width:100%; padding:12px; font-weight: bold;" onclick="executeProductWarrantySwapAsset()">Execute Certified Structural Swap & Commit Log State</button>
+                </div>
+            </div>
+
+            <div id="replacement-logs" class="view-section">
+                <h3>Historical Replacement Ledger Registry Logs</h3>
+                <input type="text" id="replacements-search-input" class="form-control" style="width: 40%; margin-bottom:15px;" placeholder="Search tags..." oninput="renderReplacementLogsRegistryTable()">
+                <table>
+                    <thead>
+                        <tr><th>Timestamp</th><th>Customer Entity</th><th>Origin Ref</th><th>Product Info</th><th>Purged Faulty Tag</th><th>Assigned New Tag</th><th>Remarks</th></tr>
+                    </thead>
+                    <tbody id="replacement-logs-table-body"></tbody>
+                </table>
+            </div>
+
+            <div id="ledger" class="view-section">
+                <div class="flex-between" style="margin-bottom: 15px;">
+                    <h3>Corporate Supply Chain Dealer Financial Ledgers</h3>
+                    <button class="btn btn-primary" onclick="openModal('ledger-modal')">+ Register Supplier Entity Profile</button>
+                </div>
+                <div class="ledger-form-grid">
+                    <div class="form-group" style="margin-bottom:0;"><label>Firm Name</label><input type="text" id="firmName" class="form-control" value="ALFA BATTERIES"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>Contact Mobile Line</label><input type="text" id="dealerPhone" class="form-control"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>Opening Principal Bal (₹)</label><input type="number" id="openingBal" class="form-control" value="0"></div>
+                    <div class="form-group" style="margin-bottom:0; display:flex; align-items:flex-end;"><button class="btn btn-success" style="width:100%;" onclick="calculateLedgerStatementEngine()">Regenerate Statement Matrix</button></div>
+                </div>
+                <div class="dealer-info-banner">
+                    <div><strong>Active Selected Firm Name:</strong> <span id="lblFirm">ALFA BATTERIES</span></div>
+                    <div><strong>Opening Base Balance:</strong> ₹<span id="lblOpBal">0.00</span></div>
+                    <div><strong>Net Accumulation:</strong> <span id="lblAccumulated" style="font-weight:700;">₹0.00</span></div>
+                </div>
+                <div class="card" style="padding:15px;">
+                    <div class="flex-between">
+                        <h5>Transactional Double Entry Rows</h5>
+                        <button class="btn btn-primary" style="padding:4px 10px; font-size:12px;" onclick="appendNewBlankLedgerRow()">+ Row Element</button>
+                    </div>
+                    <table class="ledger-main-table">
+                        <thead>
+                            <tr><th>Date (DD-MM-YYYY)</th><th>Particulars / Log Description</th><th>Voucher Type</th><th>Instrument No.</th><th>Debit Amount (Dr) (₹)</th><th>Credit Amount (Cr) (₹)</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="ledger-entries-body"></tbody>
+                    </table>
+                </div>
+                <div class="card" style="border-top:4px solid var(--accent-color)">
+                    <h3>👥 Supplier Profile Accounts Database</h3>
+                    <table>
+                        <thead>
+                            <tr><th>System ID</th><th>Legal Title / Corporate Designation</th><th>Contact</th><th>Action Options</th></tr>
+                        </thead>
+                        <tbody id="dealer-profiles-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="settings" class="view-section">
+                <div class="card" style="max-width: 600px; margin: 0 auto;">
+                    <h4>Configuration State Backup / Restoration Gateway</h4><br>
+                    <button class="btn btn-primary" style="width:100%; padding:12px; margin-bottom:15px;" onclick="exportSystemDataBackup()">📥 Export system database state backup (.json)</button>
+                    <div style="border: 2px dashed var(--border-color); padding: 20px; text-align: center; border-radius: 6px;">
+                        <label style="display:block; margin-bottom:10px; font-weight:600;">📤 Upload System Structural State Restoration Data (.json)</label>
+                        <input type="file" id="import-file-selector" accept=".json" onchange="importSystemDataBackup(this)">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="ledger-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex-between"><h4>Register New Dealer Account Profile</h4><button class="btn btn-danger" onclick="closeModal('ledger-modal')">X</button></div><br>
+            <div class="form-group"><label>Dealer Firm/Legal Title Name</label><input type="text" id="modal-dealer-title" class="form-control"></div>
+            <div class="form-group"><label>Primary Contact Mobile Line</label><input type="text" id="modal-dealer-phone" class="form-control"></div>
+            <button class="btn btn-success" style="width:100%;" onclick="commitNewDealerProfileRecord()">Save Account Target Info</button>
+        </div>
+    </div>
+
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex-between"><h4 id="prod-modal-title">Create Master Product Line</h4><button class="btn btn-danger" onclick="closeModal('product-modal')">X</button></div><br>
+            <input type="hidden" id="modal-prod-id">
+            <div class="form-group">
+                <label>Product Category</label>
+                <select id="modal-prod-category" class="form-control" onchange="handleCategoryChange()">
+                    <option value="Battery">🔋 Battery</option>
+                    <option value="Inverter">🔌 Inverter</option>
+                    <option value="Solar">☀️ Solar Panel / Accessory</option>
+                </select>
+            </div>
+            <div class="form-group"><label>HSN Harmonized Structural Code</label><input type="text" id="modal-prod-hsn" class="form-control" value="85071000"></div>
+            <div class="form-group"><label>Brand Variant Model Description</label><input type="text" id="modal-prod-brand" class="form-control" placeholder="Exide Mileage XL / Luminous Eco Watt"></div>
+            <div class="form-group"><label id="modal-specs-label">Core Technical Specifications (Amperes/Type)</label><input type="text" id="modal-prod-specs" class="form-control" placeholder="38AH / 900VA / 335W"></div>
+            <div class="form-group"><label>Warranty Plan Duration (Months)</label><input type="number" id="modal-prod-warranty" class="form-control" value="36"></div>
+            <div class="form-group"><label>Base Standard Price Unit (₹)</label><input type="number" id="modal-prod-price" class="form-control" value="4500"></div>
+            <div class="form-group"><label>Low Stock Alert Limit</label><input type="number" id="modal-prod-alert" class="form-control" value="5"></div>
+            <button class="btn btn-success" style="width:100%;" onclick="commitProductModalRecord()">Save Structured Product Mapping</button>
+        </div>
+    </div>
+
+    <div id="invoice-print-area"></div>
+
+    <script>
+        let inventory = [];
+        let invoices = [];
+        let dealers = [];
+        let replacements = [];
+        let settingsObj = { nextInvoiceNum: 1 };
+        let currentGstCart = [];
+        let currentNonGstCart = [];
+        let currentQuoteCart = [];
+
+        window.onload = function() {
+            loadStateFromLocalDisk();
+            initClockTicker();
+            switchView('dashboard');
+            prepopulateSystemIfEmpty();
+            executeAlertNotificationEngines();
+            renderDashboardCards();
+        };
+
+        function initClockTicker() {
+            setInterval(() => {
+                const d = new Date();
+                document.getElementById('live-clock').innerText = d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+            }, 1000);
+        }
+
+        function loadStateFromLocalDisk() {
+            try {
+                if(localStorage.getItem('alfa_inv')) inventory = JSON.parse(localStorage.getItem('alfa_inv'));
+                if(localStorage.getItem('alfa_inc')) invoices = JSON.parse(localStorage.getItem('alfa_inc'));
+                if(localStorage.getItem('alfa_dlr')) dealers = JSON.parse(localStorage.getItem('alfa_dlr'));
+                if(localStorage.getItem('alfa_warr')) replacements = JSON.parse(localStorage.getItem('alfa_warr'));
+                if(localStorage.getItem('alfa_sett')) settingsObj = JSON.parse(localStorage.getItem('alfa_sett'));
+            } catch(e) { console.error('Data state failure:', e); }
+        }
+
+        function saveStateToLocalDisk() {
+            localStorage.setItem('alfa_inv', JSON.stringify(inventory));
+            localStorage.setItem('alfa_inc', JSON.stringify(invoices));
+            localStorage.setItem('alfa_dlr', JSON.stringify(dealers));
+            localStorage.setItem('alfa_warr', JSON.stringify(replacements));
+            localStorage.setItem('alfa_sett', JSON.stringify(settingsObj));
+        }
+
+        function prepopulateSystemIfEmpty() {
+            if(inventory.length === 0) {
+                inventory = [
+                    { id: 101, category: "Battery", hsn: "85071000", brand: "Exide Mileage Xpress", specs: "38AH - Red Top", warranty: 36, price: 4200, alertLimit: 5, serials: ["EX10192A", "EX10192B", "EX10192C"] },
+                    { id: 102, category: "Battery", hsn: "85071000", brand: "Amaron Hi-Life", specs: "45AH - Maintenance Free", warranty: 48, price: 5100, alertLimit: 3, serials: ["AM9920A", "AM9920B"] },
+                    { id: 103, category: "Inverter", hsn: "85044090", brand: "Luminous Eco Watt +", specs: "900VA / 12V Square Wave", warranty: 24, price: 6500, alertLimit: 4, serials: ["LM900V1", "LM900V2"] },
+                    { id: 104, category: "Solar", hsn: "85414300", brand: "Microtek Solar Panel", specs: "335W / 24V Mono PERC", warranty: 120, price: 12500, alertLimit: 2, serials: ["MTKSLR01", "MTKSLR02"] }
+                ];
+                saveStateToLocalDisk();
+            }
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.sidebar-menu li').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(viewId).classList.add('active');
+            const navEl = document.getElementById('nav-' + viewId);
+            if(navEl) navEl.classList.add('active');
+
+            let titleStr = "Commercial Dashboard";
+            if(viewId==='gst-track') titleStr = "Monthly GST Volume Track";
+            if(viewId==='inventory') { titleStr = "Products & HSN Ledger Management"; renderInventory(); }
+            if(viewId==='billing-gst') { titleStr = "GST Corporate Tax Invoice Counter"; initBillingForm('gst'); }
+            if(viewId==='billing-non-gst') { titleStr = "Consumer Retail Slip Terminal"; initBillingForm('nongst'); }
+            if(viewId==='quotation') { titleStr = "Proforma Projections & Corporate Quotation Desk"; initQuotationDesk(); }
+            if(viewId==='invoice-logs') { titleStr = "Historical Split Repositories"; renderInvoiceLogsRegistryTable(); }
+            if(viewId==='warranty-desk') { titleStr = "Advanced Asset Warranty Replacement Desk"; initWarrantyForm(); }
+            if(viewId==='replacement-logs') { titleStr = "Historical Replacement Ledger Registry Logs"; renderReplacementLogsRegistryTable(); }
+            if(viewId==='ledger') { titleStr = "Corporate Supply Chain Dealer Financial Ledgers"; renderDealerModule(); }
+            
+            document.getElementById('page-title').innerText = titleStr;
+            executeAlertNotificationEngines();
+            renderDashboardCards();
+        }
+
+        function handleCategoryChange() {
+            const cat = document.getElementById('modal-prod-category').value;
+            const hsnInput = document.getElementById('modal-prod-hsn');
+            const specsLabel = document.getElementById('modal-specs-label');
+            const specsInput = document.getElementById('modal-prod-specs');
+
+            if (cat === "Battery") {
+                hsnInput.value = "85071000";
+                specsLabel.innerText = "Core Technical Specifications (Amperes/Type)";
+                specsInput.placeholder = "38AH / Red Top Long Life";
+            } else if (cat === "Inverter") {
+                hsnInput.value = "85044090";
+                specsLabel.innerText = "Inverter Specifications (VA / Voltage / Wave Type)";
+                specsInput.placeholder = "900VA / 12V Pure Sine Wave";
+            } else if (cat === "Solar") {
+                hsnInput.value = "85414300";
+                specsLabel.innerText = "Solar Specifications (Watts / Voltage / Technology)";
+                specsInput.placeholder = "335W / 24V Mono PERC Panel";
+            }
+        }
+
+        function renderInventory() {
+            const searchVal = document.getElementById('inventory-search').value.toLowerCase();
+            const tbody = document.getElementById('inventory-table-body');
+            tbody.innerHTML = '';
+
+            inventory.forEach(prod => {
+                const category = prod.category || "Battery";
+                if(prod.brand.toLowerCase().includes(searchVal) || prod.specs.toLowerCase().includes(searchVal) || category.toLowerCase().includes(searchVal) || prod.hsn.includes(searchVal)) {
+                    const row = document.createElement('tr');
+                    
+                    let serialListStr = prod.serials.map(s => `<span style="background:#e2e8f0; padding:2px 5px; margin:2px; display:inline-block; border-radius:3px; font-size:11px;">${s}</span>`).join('');
+                    if(!serialListStr) serialListStr = '<span style="color:red; font-weight:600;">OUT OF STOCK</span>';
+
+                    row.innerHTML = `
+                        <td>${prod.id}</td>
+                        <td><strong>${prod.hsn}</strong></td>
+                        <td><span class="badge ${category === 'Battery' ? 'badge-success' : category === 'Inverter' ? 'badge-danger' : 'badge-primary'}" style="background:#f1f5f9; border: 1px solid #cbd5e1;">${category}</span></td>
+                        <td>${prod.brand}</td>
+                        <td>${prod.specs}</td>
+                        <td>${prod.warranty} Months</td>
+                        <td>₹${prod.price.toFixed(2)}</td>
+                        <td><span style="color:var(--danger)">${prod.alertLimit}</span></td>
+                        <td><strong>${prod.serials.length} Units</strong><br>${serialListStr}</td>
+                        <td>
+                            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                                <button class="btn btn-success" style="padding:4px 8px; font-size:11px;" onclick="alterStockPrompt(${prod.id}, 'add')">+ Add</button>
+                                <button class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="alterStockPrompt(${prod.id}, 'subtract')">- Sub</button>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-warning" style="padding:4px 8px; font-size:11px; color:black;" onclick="openEditProductModal(${prod.id})">Edit</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+
+        function openAddProductModal() {
+            document.getElementById('prod-modal-title').innerText = "Create Master Product Line";
+            document.getElementById('modal-prod-id').value = '';
+            document.getElementById('modal-prod-category').value = 'Battery';
+            handleCategoryChange();
+            document.getElementById('modal-prod-brand').value = '';
+            document.getElementById('modal-prod-specs').value = '';
+            document.getElementById('modal-prod-warranty').value = '36';
+            document.getElementById('modal-prod-price').value = '4500';
+            document.getElementById('modal-prod-alert').value = '5';
+            openModal('product-modal');
+        }
+
+        function openEditProductModal(id) {
+            const prod = inventory.find(p => p.id === id);
+            if(!prod) return;
+            document.getElementById('prod-modal-title').innerText = "Modify Product Configuration";
+            document.getElementById('modal-prod-id').value = prod.id;
+            document.getElementById('modal-prod-category').value = prod.category || 'Battery';
+            handleCategoryChange();
+            document.getElementById('modal-prod-hsn').value = prod.hsn;
+            document.getElementById('modal-prod-brand').value = prod.brand;
+            document.getElementById('modal-prod-specs').value = prod.specs;
+            document.getElementById('modal-prod-warranty').value = prod.warranty;
+            document.getElementById('modal-prod-price').value = prod.price;
+            document.getElementById('modal-prod-alert').value = prod.alertLimit;
+            openModal('product-modal');
+        }
+
+        function commitProductModalRecord() {
+            const idVal = document.getElementById('modal-prod-id').value;
+            const category = document.getElementById('modal-prod-category').value;
+            const hsn = document.getElementById('modal-prod-hsn').value;
+            const brand = document.getElementById('modal-prod-brand').value.trim();
+            const specs = document.getElementById('modal-prod-specs').value.trim();
+            const warranty = parseInt(document.getElementById('modal-prod-warranty').value) || 0;
+            const price = parseFloat(document.getElementById('modal-prod-price').value) || 0;
+            const alertLimit = parseInt(document.getElementById('modal-prod-alert').value) || 0;
+
+            if(!brand || !specs) { alert('Validation error: Brand/Model description or core specifications missing!'); return; }
+
+            if(idVal) {
+                const prod = inventory.find(p => p.id === parseInt(idVal));
+                if(prod) {
+                    prod.category = category;
+                    prod.hsn = hsn; prod.brand = brand; prod.specs = specs;
+                    prod.warranty = warranty; prod.price = price; prod.alertLimit = alertLimit;
+                }
+            } else {
+                const newId = inventory.length > 0 ? Math.max(...inventory.map(p => p.id)) + 1 : 101;
+                inventory.push({ id: newId, category, hsn, brand, specs, warranty, price, alertLimit, serials: [] });
+            }
+            saveStateToLocalDisk();
+            closeModal('product-modal');
+            renderInventory();
+            renderDashboardCards();
+        }
+
+        function alterStockPrompt(prodId, operation) {
+            const prod = inventory.find(p => p.id === prodId);
+            if(!prod) return;
+
+            if(operation === 'add') {
+                const input = prompt(`Enter serial key barcode tag strings to APPEND to [${prod.brand}] inventory database. Separate multiple items with commas:`);
+                if(!input) return;
+                const arrayTags = input.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                if(arrayTags.length > 0) {
+                    prod.serials = [...prod.serials, ...arrayTags];
+                    saveStateToLocalDisk();
+                    renderInventory();
+                    executeAlertNotificationEngines();
+                }
+            } else if(operation === 'subtract') {
+                if(prod.serials.length === 0) {
+                    alert("Stock already zero hai! Kam nahi kiya ja sakta.");
+                    return;
+                }
+                
+                let serialOptionsStr = prod.serials.map((s, idx) => `${idx + 1}. ${s}`).join('\n');
+                const input = prompt(`Niche diye gaye serials me se kaunsa kam karna hai? Serial number enter karein (1 se ${prod.serials.length}):\n\n${serialOptionsStr}`);
+                
+                if(!input) return;
+                const selectedIdx = parseInt(input) - 1;
+                
+                if(isNaN(selectedIdx) || selectedIdx < 0 || selectedIdx >= prod.serials.length) {
+                    alert("Invalid option! Stock kam nahi kiya gaya.");
+                    return;
+                }
+                
+                const removedSerial = prod.serials.splice(selectedIdx, 1);
+                alert(`Serial key [${removedSerial}] ko inventory se safalta purvak hata diya gaya hai.`);
+                
+                saveStateToLocalDisk();
+                renderInventory();
+                executeAlertNotificationEngines();
+            }
+        }
+
+        function executeAlertNotificationEngines() {
+            const dashAlertList = document.getElementById('dashboard-stock-alert-list');
+            const dashAlertBox = document.getElementById('dashboard-stock-alert');
+            
+            if(dashAlertList && dashAlertBox) {
+                dashAlertList.innerHTML = '';
+                let triggered = false;
+                inventory.forEach(p => {
+                    if(p.serials.length <= p.alertLimit) {
+                        triggered = true;
+                        const li = document.createElement('li');
+                        li.innerHTML = `⚠️ Product Line <strong>[${p.category || 'Battery'} - ${p.brand}]</strong> running out! Units current: <span class="badge badge-danger">${p.serials.length} Units Left</span> (Alert Limit: ${p.alertLimit})`;
+                        li.onclick = function() { switchView('inventory'); document.getElementById('inventory-search').value = p.brand; renderInventory(); };
+                        dashAlertList.appendChild(li);
+                    }
+                });
+                dashAlertBox.style.display = triggered ? 'block' : 'none';
+            }
+
+            const creditList = document.getElementById('dashboard-credit-alert-list');
+            const creditBox = document.getElementById('dashboard-credit-alert');
+            if(creditList && creditBox) {
+                creditList.innerHTML = '';
+                let triggered = false;
+                const today = new Date();
+                invoices.forEach(inv => {
+                    if(inv.bakiOutstanding > 0 && inv.creditDaysSite > 0 && inv.billDate) {
+                        const bDate = new Date(inv.billDate);
+                        const diffTime = Math.abs(today - bDate);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        if(diffDays > inv.creditDaysSite) {
+                            triggered = true;
+                            const li = document.createElement('li');
+                            li.innerHTML = `🚨 Invoice <strong>#${inv.invoiceNum}</strong> (${inv.customerName}) OVERDUE BY ${diffDays - inv.creditDaysSite} DAYS! Baki Amt: <strong>₹${inv.bakiOutstanding.toFixed(2)}</strong> (Allowed: ${inv.creditDaysSite} Days)`;
+                            creditList.appendChild(li);
+                        }
+                    }
+                });
+                creditBox.style.display = triggered ? 'block' : 'none';
+            }
+        }
+
+        function renderDashboardCards() {
+            document.getElementById('dash-total-products').innerText = inventory.length;
+            document.getElementById('dash-total-dealers').innerText = dealers.length;
+            document.getElementById('dash-total-swaps').innerText = replacements.length + " Units";
+
+            let aggregateYield = 0;
+            invoices.forEach(i => { aggregateYield += i.grandTotal; });
+            document.getElementById('dash-sales-summary').innerText = '₹' + aggregateYield.toFixed(2);
+
+            const tbody = document.querySelector('#dash-recent-sales-table tbody');
+            if(tbody) {
+                tbody.innerHTML = '';
+                const b2bInvs = invoices.filter(i => i.type === 'gst' && i.customerGstin).slice(-4).reverse();
+                const b2cGst = invoices.filter(i => i.type === 'gst' && !i.customerGstin).slice(-4).reverse();
+                const b2cNonGst = invoices.filter(i => i.type === 'nongst').slice(-4).reverse();
+
+                const maxLen = Math.max(b2bInvs.length, b2cGst.length, b2cNonGst.length);
+                if(maxLen === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center" style="color:var(--text-muted)">No real-time structural transaction committed yet.</td></tr>`;
+                    return;
+                }
+
+                for(let i=0; i<maxLen; i++) {
+                    const tr = document.createElement('tr');
+                    const td1 = b2bInvs[i] ? `Inv #${b2bInvs[i].invoiceNum} - ${b2bInvs[i].customerName}<br><strong>₹${b2bInvs[i].grandTotal.toFixed(2)}</strong>` : '-';
+                    const td2 = b2cGst[i] ? `Inv #${b2cGst[i].invoiceNum} - ${b2cGst[i].customerName}<br><strong>₹${b2cGst[i].grandTotal.toFixed(2)}</strong>` : '-';
+                    const td3 = b2cNonGst[i] ? `Slip #${b2cNonGst[i].invoiceNum} - ${b2cNonGst[i].customerName}<br><strong>₹${b2cNonGst[i].grandTotal.toFixed(2)}</strong>` : '-';
+                    tr.innerHTML = `<td>${td1}</td><td>${td2}</td><td>${td3}</td>`;
+                    tbody.appendChild(tr);
+                }
+            }
+            renderGstTrackSection();
+        }
+
+        function renderGstTrackSection() {
+            const container = document.getElementById('monthly-gst-breakdown-list');
+            if(!container) return;
+            container.innerHTML = '';
+
+            let volumes = {};
+            invoices.filter(i => i.type === 'gst').forEach(inv => {
+                if(!inv.billDate) return;
+                const mStr = inv.billDate.substring(0, 7);
+                if(!volumes[mStr]) volumes[mStr] = { base: 0, gst: 0, net: 0 };
+                volumes[mStr].base += inv.subTotal;
+                volumes[mStr].gst += inv.totalGstAmt;
+                volumes[mStr].net += inv.grandTotal;
+            });
+
+            const keys = Object.keys(volumes).sort().reverse();
+            if(keys.length === 0) {
+                container.innerHTML = `<span style="color:var(--text-muted)">No active GST calculations recorded.</span>`;
+                return;
+            }
+
+            keys.forEach(k => {
+                const v = volumes[k];
+                const parts = k.split('-');
+                const dateObj = new Date(parts[0], parts[1] - 1, 1);
+                const monthName = dateObj.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+                const cardDiv = document.createElement('div');
+                cardDiv.style.cssText = "background:#f8fafc; padding:10px 15px; border-radius:5px; border:1px solid var(--border-color); margin-bottom:10px;";
+                cardDiv.innerHTML = `📅 <strong>${monthName}</strong> &nbsp;|&nbsp; Base Taxable: <strong>₹${v.base.toFixed(2)}</strong> &nbsp;|&nbsp; Collected GST Liability (18%): <span style="color:var(--purple); font-weight:bold;">₹${v.gst.toFixed(2)}</span> &nbsp;|&nbsp; Gross Turnout: <strong>₹${v.net.toFixed(2)}</strong>`;
+                container.appendChild(cardDiv);
+            });
+        }
+
+        function initBillingForm(mode) {
+            const nextNum = settingsObj.nextInvoiceNum || 1;
+            const todayStr = new Date().toISOString().substring(0,10);
+
+            if(mode === 'gst') {
+                document.getElementById('bill-gst-invnum').value = nextNum;
+                document.getElementById('bill-gst-date').value = todayStr;
+                document.getElementById('bill-cust-name').value = '';
+                document.getElementById('bill-cust-phone').value = '';
+                document.getElementById('bill-cust-gstin').value = '';
+                document.getElementById('bill-cust-address').value = '';
+                document.getElementById('gst-product-search-input').value = '';
+                currentGstCart = [];
+                filterProductDropdown('gst');
+                renderCartTable('gst');
+            } else {
+                document.getElementById('bill-nongst-invnum').value = nextNum;
+                document.getElementById('bill-nongst-date').value = todayStr;
+                document.getElementById('nongst-cust-name').value = '';
+                document.getElementById('nongst-cust-phone').value = '';
+                document.getElementById('nongst-cust-address').value = '';
+                document.getElementById('nongst-product-search-input').value = '';
+                currentNonGstCart = [];
+                filterProductDropdown('nongst');
+                renderCartTable('nongst');
+            }
+        }
+
+        function filterProductDropdown(type) {
+            const inputId = type === 'gst' ? 'gst-product-search-input' : 'nongst-product-search-input';
+            const selectId = type === 'gst' ? 'bill-product-select' : 'nongst-product-select';
+            const searchVal = document.getElementById(inputId).value.toLowerCase();
+            const selectEl = document.getElementById(selectId);
+            
+            selectEl.innerHTML = '';
+            inventory.forEach(p => {
+                const cat = p.category || "Battery";
+                const textStr = `[${cat}] ${p.brand} (${p.specs})`;
+                if(textStr.toLowerCase().includes(searchVal)) {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = textStr;
+                    selectEl.appendChild(opt);
+                }
+            });
+            updateSerialDropdown(type);
+        }
+
+        function updateSerialDropdown(type) {
+            const selectId = type === 'gst' ? 'bill-product-select' : 'nongst-product-select';
+            const serialId = type === 'gst' ? 'bill-serial-select' : 'nongst-serial-select';
+            const priceId = type === 'gst' ? 'bill-price' : 'nongst-price';
+
+            const pId = parseInt(document.getElementById(selectId).value);
+            const serialSelect = document.getElementById(serialId);
+            const priceInput = document.getElementById(priceId);
+
+            serialSelect.innerHTML = '';
+            if(!pId) return;
+
+            const prod = inventory.find(p => p.id === pId);
+            if(prod) {
+                priceInput.value = prod.price;
+                prod.serials.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.innerText = s;
+                    serialSelect.appendChild(opt);
+                });
+            }
+        }
+
+        function autoSelectSerialsBasedOnQty(type) {
+            const qtyId = type === 'gst' ? 'bill-qty' : 'nongst-qty';
+            const serialId = type === 'gst' ? 'bill-serial-select' : 'nongst-serial-select';
+            
+            const qty = parseInt(document.getElementById(qtyId).value) || 1;
+            const selectEl = document.getElementById(serialId);
+            
+            for(let i=0; i<selectEl.options.length; i++) {
+                selectEl.options[i].selected = (i < qty);
+            }
+        }
+
+        function addItemToCart(type) {
+            const selectId = type === 'gst' ? 'bill-product-select' : 'nongst-product-select';
+            const qtyId = type === 'gst' ? 'bill-qty' : 'nongst-qty';
+            const priceId = type === 'gst' ? 'bill-price' : 'nongst-price';
+            const serialId = type === 'gst' ? 'bill-serial-select' : 'nongst-serial-select';
+
+            const pId = parseInt(document.getElementById(selectId).value);
+            const qty = parseInt(document.getElementById(qtyId).value) || 0;
+            const price = parseFloat(document.getElementById(priceId).value) || 0;
+            
+            if(!pId) { alert('No core product line item selected!'); return; }
+            if(qty <= 0) { alert('Invalid quantity format!'); return; }
+
+            const prod = inventory.find(p => p.id === pId);
+            if(!prod) return;
+
+            const serialSelect = document.getElementById(serialId);
+            let selectedSerials = [];
+            for (let i = 0; i < serialSelect.options.length; i++) {
+                if (serialSelect.options[i].selected) {
+                    selectedSerials.push(serialSelect.options[i].value);
+                }
+            }
+
+            if(selectedSerials.length !== qty) {
+                alert(`Serial key mismatch! Selected serial tags count (${selectedSerials.length}) must strictly correspond to physical item quantity requested (${qty}).`);
+                return;
+            }
+
+            const cartItem = {
+                productId: prod.id,
+                brand: prod.brand,
+                category: prod.category || "Battery",
+                specs: prod.specs,
+                hsn: prod.hsn,
+                qty: qty,
+                unitPrice: price,
+                serials: selectedSerials,
+                total: price * qty
+            };
+
+            if(type === 'gst') {
+                currentGstCart.push(cartItem);
+                renderCartTable('gst');
+            } else {
+                currentNonGstCart.push(cartItem);
+                renderCartTable('nongst');
+            }
+        }
+
+        function removeCartItem(index, type) {
+            if(type === 'gst') {
+                currentGstCart.splice(index, 1);
+                renderCartTable('gst');
+            } else {
+                currentNonGstCart.splice(index, 1);
+                renderCartTable('nongst');
+            }
+        }
+
+        function renderCartTable(type) {
+            const tbodyId = type === 'gst' ? 'gst-cart-table' : 'nongst-cart-table';
+            const tbody = document.querySelector('#' + tbodyId + ' tbody');
+            tbody.innerHTML = '';
+
+            const activeCart = type === 'gst' ? currentGstCart : currentNonGstCart;
+
+            activeCart.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>[${item.category}]</strong> ${item.brand}<br><small>${item.specs}</small></td>
+                    <td>${item.hsn}</td>
+                    <td style="color:var(--secondary-color)">${item.serials.join(', ')}</td>
+                    <td>₹${item.unitPrice.toFixed(2)}</td>
+                    <td>${item.qty}</td>
+                    <td>₹${item.total.toFixed(2)}</td>
+                    <td><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="removeCartItem(${index}, '${type}')">X</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if(type === 'gst') autoCalculateGSTAndTotals();
+            else calculateCartTotals('nongst');
+        }
+
+        function autoCalculateGSTAndTotals() {
+            let subTotal = 0;
+            currentGstCart.forEach(i => { subTotal += i.total; });
+
+            const taxMode = document.getElementById('bill-tax-mode').value;
+            const buyback = parseFloat(document.getElementById('bill-buyback').value) || 0;
+            const paidAmt = parseFloat(document.getElementById('bill-gst-paid').value) || 0;
+
+            const totalGst = subTotal * 0.18;
+            const grandTotal = (subTotal + totalGst) - buyback;
+            const outstanding = grandTotal - paidAmt;
+
+            document.getElementById('bill-subtotal').innerText = '₹' + subTotal.toFixed(2);
+            document.getElementById('bill-buyback-disp').innerText = '-₹' + buyback.toFixed(2);
+            document.getElementById('bill-grandtotal').innerText = '₹' + grandTotal.toFixed(2);
+            document.getElementById('bill-total-jama').innerText = '₹' + paidAmt.toFixed(2);
+            document.getElementById('bill-total-baki').innerText = '₹' + outstanding.toFixed(2);
+
+            document.getElementById('input-total-gst').value = totalGst.toFixed(2);
+            
+            if(taxMode === 'CGST_SGST') {
+                document.getElementById('cgst-box-wrapper').style.display = 'block';
+                document.getElementById('sgst-box-wrapper').style.display = 'block';
+                document.getElementById('igst-box-wrapper').style.display = 'none';
+                document.getElementById('input-cgst').value = (totalGst / 2).toFixed(2);
+                document.getElementById('input-sgst').value = (totalGst / 2).toFixed(2);
+            } else {
+                document.getElementById('cgst-box-wrapper').style.display = 'none';
+                document.getElementById('sgst-box-wrapper').style.display = 'none';
+                document.getElementById('igst-box-wrapper').style.display = 'block';
+                document.getElementById('input-igst').value = totalGst.toFixed(2);
+            }
+        }
+
+        function manualTaxOverride(trigger) {
+            let subTotal = 0;
+            currentGstCart.forEach(i => { subTotal += i.total; });
+            const buyback = parseFloat(document.getElementById('bill-buyback').value) || 0;
+            const paidAmt = parseFloat(document.getElementById('bill-gst-paid').value) || 0;
+            const taxMode = document.getElementById('bill-tax-mode').value;
+
+            let totalGst = 0;
+            if(trigger === 'total') {
+                totalGst = parseFloat(document.getElementById('input-total-gst').value) || 0;
+                if(taxMode === 'CGST_SGST') {
+                    document.getElementById('input-cgst').value = (totalGst / 2).toFixed(2);
+                    document.getElementById('input-sgst').value = (totalGst / 2).toFixed(2);
+                } else {
+                    document.getElementById('input-igst').value = totalGst.toFixed(2);
+                }
+            } else if(trigger === 'split') {
+                const cgst = parseFloat(document.getElementById('input-cgst').value) || 0;
+                const sgst = parseFloat(document.getElementById('input-sgst').value) || 0;
+                totalGst = cgst + sgst;
+                document.getElementById('input-total-gst').value = totalGst.toFixed(2);
+            } else if(trigger === 'igst') {
+                totalGst = parseFloat(document.getElementById('input-igst').value) || 0;
+                document.getElementById('input-total-gst').value = totalGst.toFixed(2);
+            }
+
+            const grandTotal = (subTotal + totalGst) - buyback;
+            const outstanding = grandTotal - paidAmt;
+
+            document.getElementById('bill-grandtotal').innerText = '₹' + grandTotal.toFixed(2);
+            document.getElementById('bill-total-baki').innerText = '₹' + outstanding.toFixed(2);
+        }
+
+        function calculateCartTotals(type) {
+            if(type !== 'nongst') return;
+            let subTotal = 0;
+            currentNonGstCart.forEach(i => { subTotal += i.total; });
+
+            const buyback = parseFloat(document.getElementById('nongst-buyback').value) || 0;
+            const paidAmt = parseFloat(document.getElementById('bill-nongst-paid').value) || 0;
+
+            const grandTotal = subTotal - buyback;
+            const outstanding = grandTotal - paidAmt;
+
+            document.getElementById('nongst-sub-disp').innerText = '₹' + subTotal.toFixed(2);
+            document.getElementById('nongst-bb-disp').innerText = '-₹' + buyback.toFixed(2);
+            document.getElementById('nongst-grandtotal').innerText = '₹' + grandTotal.toFixed(2);
+            document.getElementById('nongst-total-jama').innerText = '₹' + paidAmt.toFixed(2);
+            document.getElementById('nongst-total-baki').innerText = '₹' + outstanding.toFixed(2);
+        }
+
+        function commitInvoiceExecution(type) {
+            const activeCart = type === 'gst' ? currentGstCart : currentNonGstCart;
+            if(activeCart.length === 0) { alert('Operation aborted: Cart items empty.'); return; }
+
+            const invNum = parseInt(document.getElementById(type === 'gst' ? 'bill-gst-invnum' : 'bill-nongst-invnum').value);
+            const billDate = document.getElementById(type === 'gst' ? 'bill-gst-date' : 'bill-nongst-date').value;
+            const custName = document.getElementById(type === 'gst' ? 'bill-cust-name' : 'nongst-cust-name').value.trim() || "General Walk-in Consumer";
+            const custPhone = document.getElementById(type === 'gst' ? 'bill-cust-phone' : 'nongst-cust-phone').value.trim();
+            const custAddress = document.getElementById(type === 'gst' ? 'bill-cust-address' : 'nongst-cust-address').value.trim();
+            
+            if(!billDate) { alert('Provide valid date stamp context.'); return; }
+
+            let subTotal = 0; activeCart.forEach(i => subTotal += i.total);
+            let buyback = parseFloat(document.getElementById(type==='gst'?'bill-buyback':'nongst-buyback').value) || 0;
+            let totalGstAmt = type === 'gst' ? parseFloat(document.getElementById('input-total-gst').value) || 0 : 0;
+            
+            let grandTotal = parseFloat(document.getElementById(type==='gst'?'bill-grandtotal':'nongst-grandtotal').innerText.replace('₹',''));
+            let jamaKiya = parseFloat(document.getElementById(type==='gst'?'bill-gst-paid':'bill-nongst-paid').value) || 0;
+            let bakiOutstanding = grandTotal - jamaKiya;
+            let creditDaysSite = parseInt(document.getElementById(type==='gst'?'bill-gst-site':'bill-nongst-site').value) || 0;
+            let paymentMode = document.getElementById(type==='gst'?'bill-gst-paymode':'bill-nongst-paymode').value;
+
+            activeCart.forEach(cartItem => {
+                const targetProd = inventory.find(p => p.id === cartItem.productId);
+                if(targetProd) {
+                    targetProd.serials = targetProd.serials.filter(s => !cartItem.serials.includes(s));
+                }
+            });
+
+            const invoiceRecord = {
+                invoiceNum: invNum,
+                type: type,
+                billDate: billDate,
+                customerName: custName,
+                customerPhone: custPhone,
+                customerAddress: custAddress,
+                customerGstin: type==='gst' ? document.getElementById('bill-cust-gstin').value.trim() : '',
+                items: activeCart,
+                subTotal: subTotal,
+                buyback: buyback,
+                totalGstAmt: totalGstAmt,
+                grandTotal: grandTotal,
+                jamaKiya: jamaKiya,
+                bakiOutstanding: bakiOutstanding,
+                creditDaysSite: creditDaysSite,
+                paymentMode: paymentMode,
+                timestamp: new Date().toLocaleString()
+            };
+
+            invoices.push(invoiceRecord);
+            if(invNum >= settingsObj.nextInvoiceNum) {
+                settingsObj.nextInvoiceNum = invNum + 1;
+            }
+
+            saveStateToLocalDisk();
+            alert('Transaction saved successfully!');
+            generateSpoolPrintArea(invoiceRecord);
+            
+            initBillingForm(type);
+            switchView('dashboard');
+        }
+
+        function generateSpoolPrintArea(inv) {
+            const el = document.getElementById('invoice-print-area');
+            let itemRowsStr = '';
+            inv.items.forEach((item, index) => {
+                itemRowsStr += `${index+1}. [${item.category}] ${item.brand} (${item.specs})\n   HSN: ${item.hsn} | Serials: ${item.serials.join(', ')}\n   Qty: ${item.qty} x ₹${item.unitPrice.toFixed(2)} = ₹${item.total.toFixed(2)}\n\n`;
+            });
+
+            el.innerHTML = `<pre>
+============================================================
+              ALFA ENTERPRISE ERM SYSTEM RECEIPT           
+============================================================
+Invoice Reference: #${inv.invoiceNum}  [Type context: ${inv.type.toUpperCase()}]
+Timestamp Entry  : ${inv.timestamp}
+Billing DateStamp: ${inv.billDate}
+------------------------------------------------------------
+Client/Firm Legal: ${inv.customerName}
+Mobile Line Contact: ${inv.customerPhone || 'N/A'}
+Physical Location: ${inv.customerAddress || 'N/A'}
+${inv.customerGstin ? 'B2B GSTIN Code   : ' + inv.customerGstin : ''}
+------------------------------------------------------------
+COMMITTED VARIANT PRODUCTS MATRIX:
+------------------------------------------------------------
+${itemRowsStr}
+------------------------------------------------------------
+FINANCIAL DATA BREAKDOWN METRIC:
+------------------------------------------------------------
+Aggregate Taxable Base           : ₹${inv.subTotal.toFixed(2)}
+Levied Total GST (18%) Override   : ₹${inv.totalGstAmt.toFixed(2)}
+Purged Buy-Back Recovery Discount : -₹${inv.buyback.toFixed(2)}
+------------------------------------------------------------
+GRAND TOTAL SYSTEM EVALUATION    : ₹${inv.grandTotal.toFixed(2)}
+Collected Jama Amount (Cash/UPI) : ₹${inv.jamaKiya.toFixed(2)}
+Baki Outstanding Debt Remainder  : ₹${inv.bakiOutstanding.toFixed(2)}
+------------------------------------------------------------
+Payment Mode Selection           : ${inv.paymentMode}
+Allowed Credit Allocation Term  : ${inv.creditDaysSite} Days Site
+------------------------------------------------------------
+       This is a computer system printed invoice document.  
+============================================================
+</pre>`;
+            window.print();
+        }
+
+        function renderInvoiceLogsRegistryTable() {
+            const b2bSearch = document.getElementById('b2b-search').value.toLowerCase();
+            const b2cSearch = document.getElementById('b2c-search').value.toLowerCase();
+
+            const t1 = document.querySelector('#b2b-registry-table tbody');
+            const t2 = document.querySelector('#b2c-registry-table tbody');
+
+            if(t1) t1.innerHTML = ''; 
+            if(t2) t2.innerHTML = '';
+
+            invoices.forEach(inv => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${inv.billDate || inv.timestamp}</td>
+                    <td><strong>${inv.type==='gst'?'Inv':'Slip'} #${inv.invoiceNum}</strong></td>
+                    <td>${inv.customerName}<br><small style="color:var(--text-muted)">${inv.customerPhone || ''}</small></td>
+                    <td>₹${inv.grandTotal.toFixed(2)}</td>
+                    <td style="color:var(--success); font-weight:600;">₹${inv.jamaKiya.toFixed(2)}</td>
+                    <td style="color:${inv.bakiOutstanding > 0 ? 'var(--danger)':'green'}; font-weight:700;">₹${inv.bakiOutstanding.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-primary" style="padding:2px 6px; font-size:11px;" onclick="spoolPrintHistorical(${inv.invoiceNum}, '${inv.type}')">Print</button>
+                    </td>
+                `;
+
+                if(inv.type === 'gst' && inv.customerGstin) {
+                    if(t1 && inv.customerName.toLowerCase().includes(b2bSearch)) t1.appendChild(row);
+                } else {
+                    if(t2 && (inv.customerName.toLowerCase().includes(b2cSearch) || (inv.customerPhone && inv.customerPhone.includes(b2cSearch)))) t2.appendChild(row);
+                }
+            });
+        }
+
+        function spoolPrintHistorical(num, type) {
+            const inv = invoices.find(i => i.invoiceNum === parseInt(num) && i.type === type);
+            if(inv) generateSpoolPrintArea(inv);
+            else alert('Historical document target missing.');
+        }
+
+        function initQuotationDesk() {
+            document.getElementById('bill-quote-date').value = new Date().toISOString().substring(0,10);
+            document.getElementById('quote-cust-name').value = '';
+            document.getElementById('quote-cust-phone').value = '';
+            document.getElementById('quote-cust-address').value = '';
+            
+            const sel = document.getElementById('quote-product-select');
+            sel.innerHTML = '';
+            inventory.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.innerText = `[${p.category || 'Battery'}] ${p.brand} (${p.specs})`;
+                sel.appendChild(opt);
+            });
+            updateQuotePriceField();
+            currentQuoteCart = [];
+            renderQuoteCartElements();
+        }
+
+        function updateQuotePriceField() {
+            const pId = parseInt(document.getElementById('quote-product-select').value);
+            const prod = inventory.find(p => p.id === pId);
+            if(prod) document.getElementById('quote-price').value = prod.price;
+        }
+
+        function addItemToQuoteCart() {
+            const pId = parseInt(document.getElementById('quote-product-select').value);
+            const rate = parseFloat(document.getElementById('quote-price').value) || 0;
+            const taxPct = parseFloat(document.getElementById('quote-gst-pct').value) || 0;
+            const qty = parseInt(document.getElementById('quote-qty').value) || 1;
+
+            const prod = inventory.find(p => p.id === pId);
+            if(!prod) return;
+
+            const baseTotal = rate * qty;
+            const calculatedGst = baseTotal * (taxPct / 100);
+
+            currentQuoteCart.push({
+                desc: `[${prod.category || 'Battery'}] ${prod.brand} (${prod.specs})`,
+                hsn: prod.hsn,
+                rate: rate,
+                qty: qty,
+                baseTotal: baseTotal,
+                taxPct: taxPct,
+                calculatedGst: calculatedGst,
+                grand: baseTotal + calculatedGst
+            });
+            renderQuoteCartElements();
+        }
+
+        function removeQuoteItem(idx) { currentQuoteCart.splice(idx,1); renderQuoteCartElements(); }
+
+        function renderQuoteCartElements() {
+            const tbody = document.querySelector('#quote-cart-table tbody');
+            tbody.innerHTML = '';
+            let totalBase = 0; let totalTax = 0;
+
+            currentQuoteCart.forEach((item, idx) => {
+                totalBase += item.baseTotal;
+                totalTax += item.calculatedGst;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${item.desc}</td><td>${item.hsn}</td><td>₹${item.rate.toFixed(2)}</td><td>${item.qty}</td><td>₹${item.baseTotal.toFixed(2)}</td><td>₹${item.calculatedGst.toFixed(2)} (${item.taxPct}%)</td><td><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="removeQuoteItem(${idx})">X</button></td>`;
+                tbody.appendChild(tr);
+            });
+
+            const buyback = parseFloat(document.getElementById('quote-buyback').value) || 0;
+            const netTotal = (totalBase + totalTax) - buyback;
+
+            document.getElementById('quote-base-disp').innerText = '₹' + totalBase.toFixed(2);
+            document.getElementById('quote-tax-disp').innerText = '₹' + totalTax.toFixed(2);
+            document.getElementById('quote-bb-disp').innerText = '-₹' + buyback.toFixed(2);
+            document.getElementById('quote-grandtotal').innerText = '₹' + netTotal.toFixed(2);
+        }
+
+        function printQuotationSlip() {
+            if(currentQuoteCart.length===0) { alert('Proforma sheet empty.'); return; }
+            const cName = document.getElementById('quote-cust-name').value || "Prospect Corporate Account Client";
+            const qDate = document.getElementById('bill-quote-date').value;
+
+            let rows = '';
+            currentQuoteCart.forEach((item, idx) => {
+                rows += `${idx+1}. ${item.desc}\n   HSN: ${item.hsn} | Offer Rate: ₹${item.rate.toFixed(2)} | Qty: ${item.qty}\n   Base: ₹${item.baseTotal.toFixed(2)} | GST Levy Check: ₹${item.calculatedGst.toFixed(2)}\n\n`;
+            });
+
+            const el = document.getElementById('invoice-print-area');
+            el.innerHTML = `<pre>
+============================================================
+              PROFORMA ESTIMATE & QUOTATION SHEET           
+============================================================
+Proforma Date Stamp: ${qDate}
+Client Designation : ${cName}
+------------------------------------------------------------
+PROPOSED TECHNICAL PRODUCTS ESTIMATE STATEMENT:
+------------------------------------------------------------
+${rows}
+------------------------------------------------------------
+AGGREGATE COMMERCIAL PROJECTIONS:
+------------------------------------------------------------
+Base Value Aggregations         : ${document.getElementById('quote-base-disp').innerText}
+Projected GST Levies Asset      : ${document.getElementById('quote-tax-disp').innerText}
+Buy-Back Recovery Deductions    : ${document.getElementById('quote-bb-disp').innerText}
+------------------------------------------------------------
+NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').innerText}
+============================================================
+</pre>`;
+            window.print();
+        }
+
+        function initWarrantyForm() {
+            document.getElementById('replace-search-serial').value = '';
+            document.getElementById('warr-cust-name').value = '';
+            document.getElementById('warr-cust-phone').value = '';
+            document.getElementById('warr-cust-address').value = '';
+            document.getElementById('warr-old-serial').value = '';
+            
+            const sel = document.getElementById('warr-product-select');
+            sel.innerHTML = '';
+            inventory.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.innerText = `[${p.category || 'Battery'}] ${p.brand} (${p.specs})`;
+                sel.appendChild(opt);
+            });
+            updateWarrantyFreshStockDropdown();
+        }
+
+        function lookupOldFaultyBatterySerial() {
+            const s = document.getElementById('replace-search-serial').value.trim().toLowerCase();
+            if(!s) { alert('Input old tag parameter.'); return; }
+
+            let found = false;
+            invoices.forEach(inv => {
+                inv.items.forEach(item => {
+                    if(item.serials.map(x=>x.toLowerCase()).includes(s)) {
+                        found = true;
+                        document.getElementById('warr-cust-name').value = inv.customerName;
+                        document.getElementById('warr-cust-phone').value = inv.customerPhone || '';
+                        document.getElementById('warr-cust-address').value = inv.customerAddress || '';
+                        document.getElementById('warr-old-serial').value = s.toUpperCase();
+                        document.getElementById('warr-product-select').value = item.productId;
+                        updateWarrantyFreshStockDropdown();
+                    }
+                });
+            });
+            if(!found) alert('Serial tag context not tracked in historical sales repositories. Manual override enabled.');
+        }
+
+        function updateWarrantyFreshStockDropdown() {
+            const pId = parseInt(document.getElementById('warr-product-select').value);
+            const sel = document.getElementById('warr-new-serial-select');
+            sel.innerHTML = '';
+            if(!pId) return;
+
+            const prod = inventory.find(p => p.id === pId);
+            if(prod) {
+                prod.serials.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s; opt.innerText = s; sel.appendChild(opt);
+                });
+            }
+        }
+
+        function executeProductWarrantySwapAsset() {
+            const oldSerial = document.getElementById('warr-old-serial').value.trim();
+            const pId = parseInt(document.getElementById('warr-product-select').value);
+            const newSerial = document.getElementById('warr-new-serial-select').value;
+            const remarks = document.getElementById('warr-remarks').value;
+            const cName = document.getElementById('warr-cust-name').value || "General Consumer Swap Claim";
+
+            if(!oldSerial || !newSerial || !pId) { alert('Structural validation anomaly: verify asset configuration strings.'); return; }
+
+            const prod = inventory.find(p => p.id === pId);
+            if(!prod) return;
+
+            prod.serials = prod.serials.filter(x => x !== newSerial);
+
+            replacements.push({
+                timestamp: new Date().toLocaleString(),
+                customerName: cName,
+                productId: pId,
+                prodDesc: `[${prod.category || 'Battery'}] ${prod.brand}`,
+                oldSerial: oldSerial,
+                newSerial: newSerial,
+                remarks: remarks
+            });
+
+            saveStateToLocalDisk();
+            alert('Certified Swap Executed!');
+            initWarrantyForm();
+            switchView('dashboard');
+        }
+
+        function renderReplacementLogsRegistryTable() {
+            const search = document.getElementById('replacements-search-input').value.toLowerCase();
+            const tbody = document.getElementById('replacement-logs-table-body');
+            tbody.innerHTML = '';
+
+            replacements.forEach(r => {
+                if(r.customerName.toLowerCase().includes(search) || r.oldSerial.toLowerCase().includes(search) || r.newSerial.toLowerCase().includes(search)) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${r.timestamp}</td><td>${r.customerName}</td><td>MAPPED</td><td>${r.prodDesc}</td><td style="color:var(--danger)">${r.oldSerial}</td><td style="color:var(--success)">${r.newSerial}</td><td>${r.remarks}</td>`;
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+
+        function renderDealerModule() {
+            const tbody = document.getElementById('dealer-profiles-table-body');
+            tbody.innerHTML = '';
+            dealers.forEach(d => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${d.id}</td><td><strong>${d.firmName}</strong></td><td>${d.phone}</td><td><button class="btn btn-warning" style="padding:2px 6px; font-size:11px; color:black;" onclick="loadDealerLedgerToDashboard('${d.firmName}', '${d.phone}')">Load Ledger</button></td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function commitNewDealerProfileRecord() {
+            const title = document.getElementById('modal-dealer-title').value.trim();
+            const phone = document.getElementById('modal-dealer-phone').value.trim();
+            if(!title) return;
+
+            const newId = dealers.length > 0 ? Math.max(...dealers.map(x=>x.id)) + 1 : 1;
+            dealers.push({ id: newId, firmName: title, phone: phone, entries: [] });
+            saveStateToLocalDisk();
+            closeModal('ledger-modal');
+            renderDealerModule();
+        }
+
+        function loadDealerLedgerToDashboard(name, phone) {
+            document.getElementById('firmName').value = name;
+            document.getElementById('dealerPhone').value = phone;
+            
+            const dealer = dealers.find(d => d.firmName === name);
+            const tbody = document.getElementById('ledger-entries-body');
+            tbody.innerHTML = '';
+
+            if(dealer && dealer.entries) {
+                document.getElementById('openingBal').value = dealer.openingBal || 0;
+                dealer.entries.forEach((e, idx) => {
+                    appendLedgerRowDataElement(e.date, e.particulars, e.vType, e.vNum, e.debit, e.credit);
+                });
+            }
+            calculateLedgerStatementEngine();
+        }
+
+        function appendNewBlankLedgerRow() {
+            appendLedgerRowDataElement(new Date().toLocaleDateString('en-GB').replace(/\//g,'-'), 'Goods Purchase', 'Purchase', '', '0', '0');
+        }
+
+        function appendLedgerRowDataElement(date, part, vType, vNum, db, cr) {
+            const tbody = document.getElementById('ledger-entries-body');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td contenteditable="true">${date}</td>
+                <td contenteditable="true">${part}</td>
+                <td>
+                    <select class="form-control" style="padding:2px;">
+                        <option value="Purchase" ${vType==='Purchase'?'selected':''}>Purchase Log</option>
+                        <option value="Payment" ${vType==='Payment'?'selected':''}>Payment Out</option>
+                        <option value="PurcReturn" ${vType==='PurcReturn'?'selected':''}>Purchase Return</option>
+                    </select>
+                </td>
+                <td contenteditable="true">${vNum}</td>
+                <td contenteditable="true" class="text-right">${db}</td>
+                <td contenteditable="true" class="text-right">${cr}</td>
+                <td><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="this.closest('tr').remove(); calculateLedgerStatementEngine();">X</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function calculateLedgerStatementEngine() {
+            const firm = document.getElementById('firmName').value;
+            const opBal = parseFloat(document.getElementById('openingBal').value) || 0;
+
+            document.getElementById('lblFirm').innerText = firm;
+            document.getElementById('lblOpBal').innerText = opBal.toFixed(2);
+
+            let totalAccumulated = opBal;
+            let rowsToSync = [];
+
+            const trs = document.querySelectorAll('#ledger-entries-body tr');
+            trs.forEach(tr => {
+                const tds = tr.querySelectorAll('td');
+                const date = tds[0].innerText;
+                const part = tds[1].innerText;
+                const vType = tds[2].querySelector('select').value;
+                const vNum = tds[3].innerText;
+                const db = parseFloat(tds[4].innerText) || 0;
+                const cr = parseFloat(tds[5].innerText) || 0;
+
+                totalAccumulated += db;
+                totalAccumulated -= cr;
+
+                rowsToSync.push({ date, particulars: part, vType, vNum, debit: db, credit: cr });
+            });
+
+            const dObj = dealers.find(d => d.firmName === firm);
+            if(dObj) {
+                dObj.openingBal = opBal;
+                dObj.entries = rowsToSync;
+                saveStateToLocalDisk();
+            }
+
+            document.getElementById('lblAccumulated').innerText = '₹' + totalAccumulated.toFixed(2);
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function exportSystemDataBackup() {
+            const blobStateStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory, invoices, dealers, replacements, settings: settingsObj }));
+            const anchor = document.createElement('a'); anchor.setAttribute("href", blobStateStr); anchor.setAttribute("download", "Alfa_Enterprise_System_Cloud_Data.json");
+            document.body.appendChild(anchor); anchor.click(); anchor.remove();
+        }
+        
+        function importSystemDataBackup(el) {
+            const fr = new FileReader(); fr.onload = function(e) {
+                try {
+                    const obj = JSON.parse(e.target.result);
+                    if(obj.inventory && obj.invoices) {
+                        inventory = obj.inventory; invoices = obj.invoices; dealers = obj.dealers || []; replacements = obj.replacements || []; settingsObj = obj.settings || { nextInvoiceNum: 1 };
+                        saveStateToLocalDisk(); window.location.reload();
+                    }
+                } catch(err) { alert('System execution anomaly: ' + err); }
+            }; fr.readAsText(el.files[0]);
+        }
+    </script>
+</body>
+</html>
