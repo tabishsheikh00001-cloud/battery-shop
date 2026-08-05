@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alfa Battery Pro - Enterprise ERP</title>
+    <title>Alfa Battery - Complete Integrated ERP</title>
     <style>
         :root {
             --primary-color: #0f172a;
@@ -81,11 +81,50 @@
         .text-right { text-align: right; }
         .text-center { text-align: center; }
 
-        #invoice-print-area { display: none; background: white; color: black; padding: 30px; width: 210mm; font-family: 'Courier New', Courier, monospace; }
+        /* --- STRICT MULTI-PAGE PRINT STYLES --- */
+        #invoice-print-area { display: none; background: white; color: black; padding: 0; width: 210mm; font-family: Arial, sans-serif; font-size: 11px; }
+        .print-page { 
+            width: 210mm; 
+            min-height: 297mm; 
+            height: 297mm;
+            page-break-after: always !important; 
+            break-after: page !important;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            position: relative; 
+            padding: 10mm; 
+            box-sizing: border-box; 
+            background: white; 
+        }
+        .print-page:last-child { 
+            page-break-after: auto !important; 
+            break-after: auto !important; 
+        }
+        .bill-box { border: 1px solid #000; width: 100%; margin-bottom: -1px; }
+        .bill-table { width: 100%; border-collapse: collapse; }
+        .bill-table th, .bill-table td { border: 1px solid #000; padding: 4px; font-size: 11px; text-align: left; }
+        .text-center { text-align: center !important; }
+        .text-right { text-align: right !important; }
+
         @media print {
+            @page { size: A4 portrait; margin: 0; }
+            html, body { background: white; height: auto !important; overflow: visible !important; }
             body * { visibility: hidden; }
             #invoice-print-area, #invoice-print-area * { visibility: visible; }
-            #invoice-print-area { position: absolute; left: 0; top: 0; display: block !important; width: 100%; }
+            #invoice-print-area { position: absolute; left: 0; top: 0; display: block !important; width: 210mm; }
+            .print-page { 
+                page-break-after: always !important; 
+                break-after: page !important; 
+                height: 297mm !important; 
+                margin: 0 !important; 
+                padding: 10mm !important; 
+                box-sizing: border-box !important; 
+            }
+            .print-page:last-child { 
+                page-break-after: auto !important; 
+                break-after: auto !important; 
+            }
         }
         select[multiple] option:checked { background: #cbd5e1 !important; color: black !important; }
     </style>
@@ -93,7 +132,7 @@
 <body>
 
     <div id="sidebar">
-        <div class="sidebar-brand">ALFA ENTERPRISE</div>
+        <div class="sidebar-brand">ALFA BATTERY</div>
         <ul class="sidebar-menu">
             <li class="active" id="nav-dashboard" onclick="switchView('dashboard')">📊 Commercial Dashboard</li>
             <li id="nav-gst-track" onclick="switchView('gst-track')">📊 Monthly GST Volume Track</li>
@@ -210,14 +249,14 @@
                         <div style="display: grid; grid-template-columns: 1.5fr 1fr 0.8fr 1fr; gap: 10px;">
                             <div class="form-group"><label>Product Element</label><select id="bill-product-select" class="form-control" onchange="updateSerialDropdown('gst')"></select></div>
                             <div class="form-group"><label>No. of Prods (Qty)</label><input type="number" id="bill-qty" class="form-control" value="1" min="1" oninput="autoSelectSerialsBasedOnQty('gst')"></div>
-                            <div class="form-group"><label>Unit Price (₹)</label><input type="number" id="bill-price" class="form-control"></div>
+                            <div class="form-group"><label>Tax Inclusive Rate (₹)</label><input type="number" id="bill-price" class="form-control"></div>
                             <div class="form-group"><label>Selected Serial(s)</label><select id="bill-serial-select" class="form-control" multiple style="height: 38px; overflow-y: auto; font-size:12px;"></select></div>
                         </div>
                         <button class="btn btn-primary" style="width:100%; margin-bottom:15px;" onclick="addItemToCart('gst')">+ Append Variant Product To Invoice Dataset</button>
                         
                         <h5>Draft Items Cart Matrix</h5>
                         <table id="gst-cart-table">
-                            <thead><tr><th>Variant Model</th><th>HSN</th><th>Serial Key Tag</th><th>Price Unit</th><th>Qty</th><th>Total</th><th>Remove</th></tr></thead>
+                            <thead><tr><th>Variant Model</th><th>HSN</th><th>Serial Key Tag</th><th>Inclusive Price</th><th>Qty</th><th>Total</th><th>Remove</th></tr></thead>
                             <tbody></tbody>
                         </table>
                     </div>
@@ -407,7 +446,10 @@
                 <div class="card" style="border-top:4px solid var(--success)">
                     <div class="flex-between" style="margin-bottom: 10px;">
                         <h3>🏢 Category Space A: B2B Business Tax Invoice Registry</h3>
-                        <input type="text" id="b2b-search" class="form-control" style="width:35%" placeholder="Filter via Customer..." oninput="renderInvoiceLogsRegistryTable()">
+                        <div style="display:flex; gap:10px; width:60%;">
+                            <input type="text" id="b2b-search-inv" class="form-control" placeholder="Search by Invoice No..." oninput="renderInvoiceLogsRegistryTable()">
+                            <input type="text" id="b2b-search" class="form-control" placeholder="Search by Name, Phone, Serial..." oninput="renderInvoiceLogsRegistryTable()">
+                        </div>
                     </div>
                     <table id="b2b-registry-table">
                         <thead><tr><th>Timestamp</th><th>Invoice Ref</th><th>Legal Name</th><th>Final Aggregate</th><th>Jama Kiya</th><th>Baki Amount</th><th>Actions</th></tr></thead>
@@ -418,7 +460,10 @@
                 <div class="card" style="border-top:4px solid var(--accent-color)">
                     <div class="flex-between" style="margin-bottom: 10px;">
                         <h3>👤 Category Space B: B2C General Retail Consumer Logs</h3>
-                        <input type="text" id="b2c-search" class="form-control" style="width:35%" placeholder="Filter via Consumer contact..." oninput="renderInvoiceLogsRegistryTable()">
+                        <div style="display:flex; gap:10px; width:60%;">
+                            <input type="text" id="b2c-search-inv" class="form-control" placeholder="Search by Invoice No..." oninput="renderInvoiceLogsRegistryTable()">
+                            <input type="text" id="b2c-search" class="form-control" placeholder="Search by Name, Phone, Serial..." oninput="renderInvoiceLogsRegistryTable()">
+                        </div>
                     </div>
                     <table id="b2c-registry-table">
                         <thead><tr><th>Timestamp</th><th>Slip ID</th><th>Consumer Name</th><th>Net Yield</th><th>Jama Kiya</th><th>Baki Amount</th><th>Actions</th></tr></thead>
@@ -547,7 +592,7 @@
             <div class="form-group"><label>Brand Variant Model Description</label><input type="text" id="modal-prod-brand" class="form-control" placeholder="Exide Mileage XL / Luminous Eco Watt"></div>
             <div class="form-group"><label id="modal-specs-label">Core Technical Specifications (Amperes/Type)</label><input type="text" id="modal-prod-specs" class="form-control" placeholder="38AH / 900VA / 335W"></div>
             <div class="form-group"><label>Warranty Plan Duration (Months)</label><input type="number" id="modal-prod-warranty" class="form-control" value="36"></div>
-            <div class="form-group"><label>Base Standard Price Unit (₹)</label><input type="number" id="modal-prod-price" class="form-control" value="4500"></div>
+            <div class="form-group"><label>Base Tax-Inclusive Price Unit (₹)</label><input type="number" id="modal-prod-price" class="form-control" value="6800"></div>
             <div class="form-group"><label>Low Stock Alert Limit</label><input type="number" id="modal-prod-alert" class="form-control" value="5"></div>
             <button class="btn btn-success" style="width:100%;" onclick="commitProductModalRecord()">Save Structured Product Mapping</button>
         </div>
@@ -602,10 +647,8 @@
         function prepopulateSystemIfEmpty() {
             if(inventory.length === 0) {
                 inventory = [
-                    { id: 101, category: "Battery", hsn: "85071000", brand: "Exide Mileage Xpress", specs: "38AH - Red Top", warranty: 36, price: 4200, alertLimit: 5, serials: ["EX10192A", "EX10192B", "EX10192C"] },
-                    { id: 102, category: "Battery", hsn: "85071000", brand: "Amaron Hi-Life", specs: "45AH - Maintenance Free", warranty: 48, price: 5100, alertLimit: 3, serials: ["AM9920A", "AM9920B"] },
-                    { id: 103, category: "Inverter", hsn: "85044090", brand: "Luminous Eco Watt +", specs: "900VA / 12V Square Wave", warranty: 24, price: 6500, alertLimit: 4, serials: ["LM900V1", "LM900V2"] },
-                    { id: 104, category: "Solar", hsn: "85414300", brand: "Microtek Solar Panel", specs: "335W / 24V Mono PERC", warranty: 120, price: 12500, alertLimit: 2, serials: ["MTKSLR01", "MTKSLR02"] }
+                    { id: 101, category: "Battery", hsn: "85071000", brand: "CF-4.0 LB", specs: "12V Battery", warranty: 36, price: 6800, alertLimit: 5, serials: ["9651", "9652", "9653", "9654", "9655"] },
+                    { id: 102, category: "Battery", hsn: "85072000", brand: "KB 1500 TT", specs: "Tall Tubular Battery", warranty: 48, price: 10201, alertLimit: 3, serials: ["26G59275"] }
                 ];
                 saveStateToLocalDisk();
             }
@@ -634,6 +677,9 @@
             executeAlertNotificationEngines();
             renderDashboardCards();
         }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
         function handleCategoryChange() {
             const cat = document.getElementById('modal-prod-category').value;
@@ -702,7 +748,7 @@
             document.getElementById('modal-prod-brand').value = '';
             document.getElementById('modal-prod-specs').value = '';
             document.getElementById('modal-prod-warranty').value = '36';
-            document.getElementById('modal-prod-price').value = '4500';
+            document.getElementById('modal-prod-price').value = '6800';
             document.getElementById('modal-prod-alert').value = '5';
             openModal('product-modal');
         }
@@ -768,23 +814,23 @@
                 }
             } else if(operation === 'subtract') {
                 if(prod.serials.length === 0) {
-                    alert("Stock already zero hai! Kam nahi kiya ja sakta.");
+                    alert("Stock balance is zero. Subtraction aborted.");
                     return;
                 }
                 
                 let serialOptionsStr = prod.serials.map((s, idx) => `${idx + 1}. ${s}`).join('\n');
-                const input = prompt(`Niche diye gaye serials me se kaunsa kam karna hai? Serial number enter karein (1 se ${prod.serials.length}):\n\n${serialOptionsStr}`);
+                const input = prompt(`Select target serial index to PURGE (1 through ${prod.serials.length}):\n\n${serialOptionsStr}`);
                 
                 if(!input) return;
                 const selectedIdx = parseInt(input) - 1;
                 
                 if(isNaN(selectedIdx) || selectedIdx < 0 || selectedIdx >= prod.serials.length) {
-                    alert("Invalid option! Stock kam nahi kiya gaya.");
+                    alert("Invalid option! Stock altered state aborted.");
                     return;
                 }
                 
                 const removedSerial = prod.serials.splice(selectedIdx, 1);
-                alert(`Serial key [${removedSerial}] ko inventory se safalta purvak hata diya gaya hai.`);
+                alert(`Serial key tag [${removedSerial}] removed successfully.`);
                 
                 saveStateToLocalDisk();
                 renderInventory();
@@ -994,7 +1040,7 @@
 
             const pId = parseInt(document.getElementById(selectId).value);
             const qty = parseInt(document.getElementById(qtyId).value) || 0;
-            const price = parseFloat(document.getElementById(priceId).value) || 0;
+            const incPrice = parseFloat(document.getElementById(priceId).value) || 0;
             
             if(!pId) { alert('No core product line item selected!'); return; }
             if(qty <= 0) { alert('Invalid quantity format!'); return; }
@@ -1010,10 +1056,30 @@
                 }
             }
 
-            if(selectedSerials.length !== qty) {
-                alert(`Serial key mismatch! Selected serial tags count (${selectedSerials.length}) must strictly correspond to physical item quantity requested (${qty}).`);
-                return;
+            if(type === 'gst') {
+                if(selectedSerials.length === 0) {
+                    alert("Please select at least one serial number.");
+                    return;
+                }
+                
+                if(selectedSerials.length === 1 && qty > 1) {
+                    const baseSerial = selectedSerials[0];
+                    selectedSerials = [];
+                    for(let k=0; k<qty; k++) {
+                        selectedSerials.push(baseSerial);
+                    }
+                } else if(selectedSerials.length !== qty) {
+                    alert(`Serial selection mismatch! Total selected serials (${selectedSerials.length}) must match quantity (${qty}), or select exactly 1 serial to repeat.`);
+                    return;
+                }
+            } else {
+                if(selectedSerials.length !== qty) {
+                    alert(`Serial key mismatch! Selected serial tags count (${selectedSerials.length}) must correspond to quantity (${qty}).`);
+                    return;
+                }
             }
+
+            const baseRate = type === 'gst' ? (incPrice / 1.18) : incPrice;
 
             const cartItem = {
                 productId: prod.id,
@@ -1022,9 +1088,10 @@
                 specs: prod.specs,
                 hsn: prod.hsn,
                 qty: qty,
-                unitPrice: price,
+                incPrice: incPrice,
+                unitPrice: baseRate,
                 serials: selectedSerials,
-                total: price * qty
+                total: baseRate * qty
             };
 
             if(type === 'gst') {
@@ -1059,9 +1126,9 @@
                     <td><strong>[${item.category}]</strong> ${item.brand}<br><small>${item.specs}</small></td>
                     <td>${item.hsn}</td>
                     <td style="color:var(--secondary-color)">${item.serials.join(', ')}</td>
-                    <td>₹${item.unitPrice.toFixed(2)}</td>
+                    <td>₹${(item.incPrice || item.unitPrice).toFixed(2)}</td>
                     <td>${item.qty}</td>
-                    <td>₹${item.total.toFixed(2)}</td>
+                    <td>₹${((item.incPrice || item.unitPrice) * item.qty).toFixed(2)}</td>
                     <td><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="removeCartItem(${index}, '${type}')">X</button></td>
                 `;
                 tbody.appendChild(tr);
@@ -1080,7 +1147,7 @@
             const paidAmt = parseFloat(document.getElementById('bill-gst-paid').value) || 0;
 
             const totalGst = subTotal * 0.18;
-            const grandTotal = (subTotal + totalGst) - buyback;
+            const grandTotal = Math.round((subTotal + totalGst) - buyback);
             const outstanding = grandTotal - paidAmt;
 
             document.getElementById('bill-subtotal').innerText = '₹' + subTotal.toFixed(2);
@@ -1131,7 +1198,7 @@
                 document.getElementById('input-total-gst').value = totalGst.toFixed(2);
             }
 
-            const grandTotal = (subTotal + totalGst) - buyback;
+            const grandTotal = Math.round((subTotal + totalGst) - buyback);
             const outstanding = grandTotal - paidAmt;
 
             document.getElementById('bill-grandtotal').innerText = '₹' + grandTotal.toFixed(2);
@@ -1141,7 +1208,7 @@
         function calculateCartTotals(type) {
             if(type !== 'nongst') return;
             let subTotal = 0;
-            currentNonGstCart.forEach(i => { subTotal += i.total; });
+            currentNonGstCart.forEach(i => { subTotal += (i.incPrice || i.unitPrice) * i.qty; });
 
             const buyback = parseFloat(document.getElementById('nongst-buyback').value) || 0;
             const paidAmt = parseFloat(document.getElementById('bill-nongst-paid').value) || 0;
@@ -1162,7 +1229,7 @@
 
             const invNum = parseInt(document.getElementById(type === 'gst' ? 'bill-gst-invnum' : 'bill-nongst-invnum').value);
             const billDate = document.getElementById(type === 'gst' ? 'bill-gst-date' : 'bill-nongst-date').value;
-            const custName = document.getElementById(type === 'gst' ? 'bill-cust-name' : 'nongst-cust-name').value.trim() || "General Walk-in Consumer";
+            const custName = document.getElementById(type === 'gst' ? 'bill-cust-name' : 'nongst-cust-name').value.trim() || "Alfa Batteries, Seoni";
             const custPhone = document.getElementById(type === 'gst' ? 'bill-cust-phone' : 'nongst-cust-phone').value.trim();
             const custAddress = document.getElementById(type === 'gst' ? 'bill-cust-address' : 'nongst-cust-address').value.trim();
             
@@ -1181,7 +1248,10 @@
             activeCart.forEach(cartItem => {
                 const targetProd = inventory.find(p => p.id === cartItem.productId);
                 if(targetProd) {
-                    targetProd.serials = targetProd.serials.filter(s => !cartItem.serials.includes(s));
+                    cartItem.serials.forEach(sTag => {
+                        const sIdx = targetProd.serials.indexOf(sTag);
+                        if(sIdx !== -1) targetProd.serials.splice(sIdx, 1);
+                    });
                 }
             });
 
@@ -1220,50 +1290,277 @@
 
         function generateSpoolPrintArea(inv) {
             const el = document.getElementById('invoice-print-area');
-            let itemRowsStr = '';
+            
+            let productRowsHtml = '';
+            let hsnTaxRowsHtml = '';
+            let totalQty = 0;
+
+            let cgstAmt = inv.totalGstAmt / 2;
+            let sgstAmt = inv.totalGstAmt / 2;
+
             inv.items.forEach((item, index) => {
-                itemRowsStr += `${index+1}. [${item.category}] ${item.brand} (${item.specs})\n   HSN: ${item.hsn} | Serials: ${item.serials.join(', ')}\n   Qty: ${item.qty} x ₹${item.unitPrice.toFixed(2)} = ₹${item.total.toFixed(2)}\n\n`;
+                totalQty += item.qty;
+                let serialsDisplay = item.serials.join(', ');
+
+                productRowsHtml += `
+                    <tr>
+                        <td class="text-center">${index + 1}</td>
+                        <td>
+                            <strong>${item.brand}</strong> - ${item.specs}<br>
+                            <span style="font-size:10px; font-weight: bold; color: #333;">Serials: ${serialsDisplay}</span>
+                        </td>
+                        <td class="text-center">${item.hsn}</td>
+                        <td class="text-center">${item.qty}.00 No's</td>
+                        <td class="text-right">${item.unitPrice.toFixed(2)}</td>
+                        <td class="text-center">No's</td>
+                        <td class="text-right">${item.total.toFixed(2)}</td>
+                    </tr>
+                `;
+
+                let itemCgst = (item.total * 0.09);
+                let itemSgst = (item.total * 0.09);
+
+                hsnTaxRowsHtml += `
+                    <tr>
+                        <td>${item.hsn}</td>
+                        <td class="text-right">${item.total.toFixed(2)}</td>
+                        <td class="text-center">9%</td>
+                        <td class="text-right">${itemCgst.toFixed(2)}</td>
+                        <td class="text-center">9%</td>
+                        <td class="text-right">${itemSgst.toFixed(2)}</td>
+                        <td class="text-right">${(itemCgst + itemSgst).toFixed(2)}</td>
+                    </tr>
+                `;
             });
 
-            el.innerHTML = `<pre>
-============================================================
-              ALFA ENTERPRISE ERM SYSTEM RECEIPT           
-============================================================
-Invoice Reference: #${inv.invoiceNum}  [Type context: ${inv.type.toUpperCase()}]
-Timestamp Entry  : ${inv.timestamp}
-Billing DateStamp: ${inv.billDate}
-------------------------------------------------------------
-Client/Firm Legal: ${inv.customerName}
-Mobile Line Contact: ${inv.customerPhone || 'N/A'}
-Physical Location: ${inv.customerAddress || 'N/A'}
-${inv.customerGstin ? 'B2B GSTIN Code   : ' + inv.customerGstin : ''}
-------------------------------------------------------------
-COMMITTED VARIANT PRODUCTS MATRIX:
-------------------------------------------------------------
-${itemRowsStr}
-------------------------------------------------------------
-FINANCIAL DATA BREAKDOWN METRIC:
-------------------------------------------------------------
-Aggregate Taxable Base           : ₹${inv.subTotal.toFixed(2)}
-Levied Total GST (18%) Override   : ₹${inv.totalGstAmt.toFixed(2)}
-Purged Buy-Back Recovery Discount : -₹${inv.buyback.toFixed(2)}
-------------------------------------------------------------
-GRAND TOTAL SYSTEM EVALUATION    : ₹${inv.grandTotal.toFixed(2)}
-Collected Jama Amount (Cash/UPI) : ₹${inv.jamaKiya.toFixed(2)}
-Baki Outstanding Debt Remainder  : ₹${inv.bakiOutstanding.toFixed(2)}
-------------------------------------------------------------
-Payment Mode Selection           : ${inv.paymentMode}
-Allowed Credit Allocation Term  : ${inv.creditDaysSite} Days Site
-------------------------------------------------------------
-       This is a computer system printed invoice document.  
-============================================================
-</pre>`;
-            window.print();
+            // PAGE 1 HTML
+            const page1Html = `
+                <div class="print-page">
+                    <div>
+                        <div class="bill-box text-center" style="font-size:16px; font-weight:bold; padding: 5px;">Tax Invoice</div>
+                        <div class="bill-box" style="display: flex;">
+                            <div style="flex: 2; padding: 5px; border-right: 1px solid #000; font-size:10px;">
+                                <strong>IRN :</strong> 0824069e3b5238a97259127296506dec2746455cdb4-0d85b2a853012ab8d14a1<br>
+                                <strong>Ack No. :</strong> 162625454427093 &nbsp;&nbsp;&nbsp; <strong>Ack Date :</strong> ${inv.billDate}
+                            </div>
+                            <div style="flex: 1; text-align: center; font-size:14px; font-weight:bold; padding: 5px;">
+                                e-Invoice
+                            </div>
+                        </div>
+
+                        <div class="bill-box" style="display: flex;">
+                            <div style="flex: 1; padding: 5px; border-right: 1px solid #000;">
+                                <strong style="font-size:13px;">Alfa Batteries, Seoni</strong><br>
+                                M.No. 88395 51212<br>
+                                Seoni (M.P.)<br>
+                                <strong>GSTIN/UIN :</strong> 23BIPPH2218K1ZA<br>
+                                <strong>State Name :</strong> Madhya Pradesh, Code : 23
+                            </div>
+                            <div style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 5px;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=Invoice_${inv.invoiceNum}_GSTIN_23AAPFJ7206E1ZI" alt="e-Invoice QR" style="width: 80px; height: 80px;">
+                            </div>
+                        </div>
+
+                        <div class="bill-box" style="display: flex;">
+                            <div style="flex: 1; padding: 5px; border-right: 1px solid #000;">
+                                <strong>Consignee (Ship to)</strong><br>
+                                <strong>${inv.customerName}</strong><br>
+                                M.No. ${inv.customerPhone || '88395 51212'}<br>
+                                ${inv.customerAddress || 'Seoni'}<br>
+                                <strong>GSTIN/UIN :</strong> ${inv.customerGstin || '23BIPPH2218K1ZA'}<br>
+                                <strong>State Name :</strong> Madhya Pradesh, Code : 23
+                            </div>
+                            <div style="flex: 1; padding: 5px;">
+                                <strong>Buyer (Bill to)</strong><br>
+                                <strong>${inv.customerName}</strong><br>
+                                M.No. ${inv.customerPhone || '88395 51212'}<br>
+                                ${inv.customerAddress || 'Seoni'}<br>
+                                <strong>GSTIN/UIN :</strong> ${inv.customerGstin || '23BIPPH2218K1ZA'}<br>
+                                <strong>State Name :</strong> Madhya Pradesh, Code : 23
+                            </div>
+                        </div>
+
+                        <table class="bill-table" style="margin-bottom: -1px;">
+                            <tr>
+                                <td><strong>Invoice No.</strong><br>${inv.invoiceNum}</td>
+                                <td><strong>Dated</strong><br>${inv.billDate}</td>
+                                <td><strong>Delivery Note</strong><br>-</td>
+                                <td><strong>Mode/Terms of Payment</strong><br>${inv.paymentMode}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Reference No. & Date.</strong><br>-</td>
+                                <td><strong>Other References</strong><br>-</td>
+                                <td><strong>Buyer's Order No.</strong><br>-</td>
+                                <td><strong>Dated</strong><br>-</td>
+                            </tr>
+                        </table>
+
+                        <table class="bill-table" style="margin-bottom: -1px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px;">Sl No.</th>
+                                    <th>Description of Goods</th>
+                                    <th style="width: 70px;">HSN/SAC</th>
+                                    <th style="width: 70px;">Quantity</th>
+                                    <th style="width: 70px;">Rate per</th>
+                                    <th style="width: 50px;">Disc. %</th>
+                                    <th style="width: 80px;">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${productRowsHtml}
+                                <tr>
+                                    <td></td>
+                                    <td class="text-right"><strong>Output CGST 9%</strong></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>9 %</td>
+                                    <td></td>
+                                    <td class="text-right">${cgstAmt.toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td class="text-right"><strong>Output SGST 9%</strong></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>9 %</td>
+                                    <td></td>
+                                    <td class="text-right">${sgstAmt.toFixed(2)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: auto; padding-top: 10px;">
+                        <div class="text-center" style="font-style: italic; font-weight: bold; margin-bottom: 5px;">continued to page number 2</div>
+                        <div class="text-center" style="font-size: 10px;">This is a Computer Generated Invoice</div>
+                    </div>
+                </div>
+            `;
+
+            // PAGE 2 HTML
+            const page2Html = `
+                <div class="print-page">
+                    <div>
+                        <div class="bill-box" style="padding: 5px; font-size:10px;">
+                            <strong>Alfa Batteries</strong><br>
+                           Seoni (M.P.)GSTIN/UIN : 23BIPPH2218K1ZA
+                        </div>
+                        <div class="bill-box text-center" style="font-size:14px; font-weight:bold; padding: 3px;">Tax Invoice (Page 2)</div>
+                        
+                        <div class="bill-box" style="display: flex;">
+                            <div style="flex: 1; padding: 5px; border-right: 1px solid #000;">
+                                <strong>Consignee (Ship to)</strong><br>
+                                <strong>${inv.customerName}</strong><br>
+                                M.No. ${inv.customerPhone || '88395 51212'}<br>
+                                ${inv.customerAddress || 'Seoni'}<br>
+                                GSTIN/UIN: ${inv.customerGstin || '23BIPPH2218K1ZA'}<br>
+                                State Name: Madhya Pradesh, Code: 23
+                            </div>
+                            <div style="flex: 1; padding: 5px;">
+                                <strong>Invoice No.:</strong> ${inv.invoiceNum} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Dated:</strong> ${inv.billDate}<br>
+                                <strong>Buyer (Bill to):</strong> ${inv.customerName}<br>
+                                GSTIN/UIN: ${inv.customerGstin || '23BIPPH2218K1ZA'}<br>
+                                State Name: Madhya Pradesh, Code: 23
+                            </div>
+                        </div>
+
+                        <table class="bill-table" style="margin-bottom: -1px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px;">Sl No</th>
+                                    <th>Description of Goods</th>
+                                    <th style="width: 70px;">HSN/SAC</th>
+                                    <th style="width: 70px;">Quantity</th>
+                                    <th style="width: 70px;">Rate</th>
+                                    <th style="width: 50px;">per Disc. %</th>
+                                    <th style="width: 80px;">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${inv.buyback > 0 ? `
+                                <tr>
+                                    <td colspan="6" class="text-right"><strong>Less: Buy-Back / Discount</strong></td>
+                                    <td class="text-right">(-) ${inv.buyback.toFixed(2)}</td>
+                                </tr>` : ''}
+                                <tr>
+                                    <td colspan="6" class="text-right"><strong>Less: Round Off</strong></td>
+                                    <td class="text-right">(-)0.00</td>
+                                </tr>
+                                <tr style="font-weight: bold; background: #f9f9f9;">
+                                    <td colspan="3" class="text-right">Total</td>
+                                    <td class="text-center">${totalQty}.00 No's</td>
+                                    <td colspan="2"></td>
+                                    <td class="text-right">₹ ${inv.grandTotal.toFixed(2)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="bill-box" style="padding: 5px;">
+                            <strong>Amount Chargeable (in words) :</strong><br>
+                            <span style="font-weight: bold; text-transform: capitalize;">Indian Rupees ${inv.grandTotal} Only</span>
+                        </div>
+
+                        <table class="bill-table" style="margin-bottom: -1px;">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">HSN/SAC</th>
+                                    <th rowspan="2">Taxable Value</th>
+                                    <th colspan="2" class="text-center">CGST</th>
+                                    <th colspan="2" class="text-center">SGST/UTGST</th>
+                                    <th rowspan="2" class="text-center">Total Tax Amount</th>
+                                </tr>
+                                <tr>
+                                    <th>Rate</th>
+                                    <th>Amount</th>
+                                    <th>Rate</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${hsnTaxRowsHtml}
+                                <tr style="font-weight: bold;">
+                                    <td>Total</td>
+                                    <td class="text-right">${inv.subTotal.toFixed(2)}</td>
+                                    <td></td>
+                                    <td class="text-right">${cgstAmt.toFixed(2)}</td>
+                                    <td></td>
+                                    <td class="text-right">${sgstAmt.toFixed(2)}</td>
+                                    <td class="text-right">${inv.totalGstAmt.toFixed(2)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="bill-box" style="padding: 5px;">
+                            <strong>Tax Amount (in words) :</strong> Indian Rupees ${inv.totalGstAmt.toFixed(2)} Only
+                        </div>
+                    </div>
+
+                    <div style="margin-top: auto; padding-top: 10px;">
+                        <div class="bill-box" style="display: flex;">
+                            <div style="flex: 1; padding: 5px; border-right: 1px solid #000; font-size: 10px;">
+                               
+                            <div style="flex: 1; padding: 5px; text-align: right; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>for <strong>Alfa Batteries</strong></div>
+                                <div style="margin-top: 40px;">Authorised Signatory</div>
+                            </div>
+                        </div>
+                        
+                </div>
+            `;
+
+            el.innerHTML = page1Html + page2Html;
+            setTimeout(() => {
+                window.print();
+            }, 300);
         }
 
         function renderInvoiceLogsRegistryTable() {
-            const b2bSearch = document.getElementById('b2b-search').value.toLowerCase();
-            const b2cSearch = document.getElementById('b2c-search').value.toLowerCase();
+            const b2bInvNum = document.getElementById('b2b-search-inv').value.trim();
+            const b2bSearch = document.getElementById('b2b-search').value.toLowerCase().trim();
+
+            const b2cInvNum = document.getElementById('b2c-search-inv').value.trim();
+            const b2cSearch = document.getElementById('b2c-search').value.toLowerCase().trim();
 
             const t1 = document.querySelector('#b2b-registry-table tbody');
             const t2 = document.querySelector('#b2c-registry-table tbody');
@@ -1285,10 +1582,26 @@ Allowed Credit Allocation Term  : ${inv.creditDaysSite} Days Site
                     </td>
                 `;
 
+                let serialsJoined = inv.items.map(i => i.serials.join(' ')).join(' ').toLowerCase();
+
+                let matchesNamePhoneSerialB2B = !b2bSearch || 
+                    inv.customerName.toLowerCase().includes(b2bSearch) || 
+                    (inv.customerPhone && inv.customerPhone.toLowerCase().includes(b2bSearch)) || 
+                    serialsJoined.includes(b2bSearch);
+
+                let matchesInvNumB2B = !b2bInvNum || inv.invoiceNum.toString() === b2bInvNum;
+
+                let matchesNamePhoneSerialB2C = !b2cSearch || 
+                    inv.customerName.toLowerCase().includes(b2cSearch) || 
+                    (inv.customerPhone && inv.customerPhone.toLowerCase().includes(b2cSearch)) || 
+                    serialsJoined.includes(b2cSearch);
+
+                let matchesInvNumB2C = !b2cInvNum || inv.invoiceNum.toString() === b2cInvNum;
+
                 if(inv.type === 'gst' && inv.customerGstin) {
-                    if(t1 && inv.customerName.toLowerCase().includes(b2bSearch)) t1.appendChild(row);
+                    if(t1 && matchesNamePhoneSerialB2B && matchesInvNumB2B) t1.appendChild(row);
                 } else {
-                    if(t2 && (inv.customerName.toLowerCase().includes(b2cSearch) || (inv.customerPhone && inv.customerPhone.includes(b2cSearch)))) t2.appendChild(row);
+                    if(t2 && matchesNamePhoneSerialB2C && matchesInvNumB2C) t2.appendChild(row);
                 }
             });
         }
@@ -1510,120 +1823,111 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
             tbody.innerHTML = '';
             dealers.forEach(d => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${d.id}</td><td><strong>${d.firmName}</strong></td><td>${d.phone}</td><td><button class="btn btn-warning" style="padding:2px 6px; font-size:11px; color:black;" onclick="loadDealerLedgerToDashboard('${d.firmName}', '${d.phone}')">Load Ledger</button></td>`;
+                tr.innerHTML = `<td>${d.id}</td><td><strong>${d.title}</strong></td><td>${d.phone}</td><td><button class="btn btn-primary" style="padding:2px 6px; font-size:11px;" onclick="loadDealerLedgerToBoard(${d.id})">Select Profile</button></td>`;
                 tbody.appendChild(tr);
             });
         }
 
         function commitNewDealerProfileRecord() {
-            const title = document.getElementById('modal-dealer-title').value.trim();
-            const phone = document.getElementById('modal-dealer-phone').value.trim();
-            if(!title) return;
-
-            const newId = dealers.length > 0 ? Math.max(...dealers.map(x=>x.id)) + 1 : 1;
-            dealers.push({ id: newId, firmName: title, phone: phone, entries: [] });
+            const t = document.getElementById('modal-dealer-title').value.trim();
+            const p = document.getElementById('modal-dealer-phone').value.trim();
+            if(!t) { alert('Title required'); return; }
+            const newId = dealers.length > 0 ? Math.max(...dealers.map(d=>d.id)) + 1 : 1;
+            dealers.push({ id: newId, title: t, phone: p, entries: [] });
             saveStateToLocalDisk();
             closeModal('ledger-modal');
             renderDealerModule();
         }
 
-        function loadDealerLedgerToDashboard(name, phone) {
-            document.getElementById('firmName').value = name;
-            document.getElementById('dealerPhone').value = phone;
-            
-            const dealer = dealers.find(d => d.firmName === name);
-            const tbody = document.getElementById('ledger-entries-body');
-            tbody.innerHTML = '';
-
-            if(dealer && dealer.entries) {
-                document.getElementById('openingBal').value = dealer.openingBal || 0;
-                dealer.entries.forEach((e, idx) => {
-                    appendLedgerRowDataElement(e.date, e.particulars, e.vType, e.vNum, e.debit, e.credit);
-                });
-            }
+        function loadDealerLedgerToBoard(id) {
+            const d = dealers.find(x=>x.id===id);
+            if(!d) return;
+            document.getElementById('firmName').value = d.title;
+            document.getElementById('dealerPhone').value = d.phone;
+            document.getElementById('lblFirm').innerText = d.title;
             calculateLedgerStatementEngine();
         }
 
         function appendNewBlankLedgerRow() {
-            appendLedgerRowDataElement(new Date().toLocaleDateString('en-GB').replace(/\//g,'-'), 'Goods Purchase', 'Purchase', '', '0', '0');
-        }
-
-        function appendLedgerRowDataElement(date, part, vType, vNum, db, cr) {
             const tbody = document.getElementById('ledger-entries-body');
             const tr = document.createElement('tr');
+            const todayStr = new Date().toLocaleDateString('en-GB');
             tr.innerHTML = `
-                <td contenteditable="true">${date}</td>
-                <td contenteditable="true">${part}</td>
-                <td>
-                    <select class="form-control" style="padding:2px;">
-                        <option value="Purchase" ${vType==='Purchase'?'selected':''}>Purchase Log</option>
-                        <option value="Payment" ${vType==='Payment'?'selected':''}>Payment Out</option>
-                        <option value="PurcReturn" ${vType==='PurcReturn'?'selected':''}>Purchase Return</option>
-                    </select>
-                </td>
-                <td contenteditable="true">${vNum}</td>
-                <td contenteditable="true" class="text-right">${db}</td>
-                <td contenteditable="true" class="text-right">${cr}</td>
+                <td contenteditable="true">${todayStr}</td>
+                <td contenteditable="true">Purchase Stock Batch</td>
+                <td contenteditable="true">Purchase</td>
+                <td contenteditable="true">INV-${Math.floor(Math.random()*9000+1000)}</td>
+                <td contenteditable="true" class="text-right">0.00</td>
+                <td contenteditable="true" class="text-right">0.00</td>
                 <td><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="this.closest('tr').remove(); calculateLedgerStatementEngine();">X</button></td>
             `;
             tbody.appendChild(tr);
         }
 
         function calculateLedgerStatementEngine() {
-            const firm = document.getElementById('firmName').value;
+            const rows = document.querySelectorAll('#ledger-entries-body tr');
+            let totalDr = 0;
+            let totalCr = 0;
             const opBal = parseFloat(document.getElementById('openingBal').value) || 0;
 
-            document.getElementById('lblFirm').innerText = firm;
-            document.getElementById('lblOpBal').innerText = opBal.toFixed(2);
-
-            let totalAccumulated = opBal;
-            let rowsToSync = [];
-
-            const trs = document.querySelectorAll('#ledger-entries-body tr');
-            trs.forEach(tr => {
+            rows.forEach(tr => {
                 const tds = tr.querySelectorAll('td');
-                const date = tds[0].innerText;
-                const part = tds[1].innerText;
-                const vType = tds[2].querySelector('select').value;
-                const vNum = tds[3].innerText;
-                const db = parseFloat(tds[4].innerText) || 0;
-                const cr = parseFloat(tds[5].innerText) || 0;
-
-                totalAccumulated += db;
-                totalAccumulated -= cr;
-
-                rowsToSync.push({ date, particulars: part, vType, vNum, debit: db, credit: cr });
+                if(tds.length >= 6) {
+                    const dr = parseFloat(tds[4].innerText.replace(/[^0-9.-]+/g, "")) || 0;
+                    const cr = parseFloat(tds[5].innerText.replace(/[^0-9.-]+/g, "")) || 0;
+                    totalDr += dr;
+                    totalCr += cr;
+                }
             });
 
-            const dObj = dealers.find(d => d.firmName === firm);
-            if(dObj) {
-                dObj.openingBal = opBal;
-                dObj.entries = rowsToSync;
-                saveStateToLocalDisk();
-            }
-
-            document.getElementById('lblAccumulated').innerText = '₹' + totalAccumulated.toFixed(2);
+            const accumulated = opBal + totalDr - totalCr;
+            document.getElementById('lblOpBal').innerText = opBal.toFixed(2);
+            document.getElementById('lblAccumulated').innerText = '₹' + accumulated.toFixed(2);
         }
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        
         function exportSystemDataBackup() {
-            const blobStateStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ inventory, invoices, dealers, replacements, settings: settingsObj }));
-            const anchor = document.createElement('a'); anchor.setAttribute("href", blobStateStr); anchor.setAttribute("download", "Alfa_Enterprise_System_Cloud_Data.json");
-            document.body.appendChild(anchor); anchor.click(); anchor.remove();
+            const payload = {
+                inventory,
+                invoices,
+                dealers,
+                replacements,
+                settingsObj
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `Alfa_Battery_Backup_${new Date().toISOString().substring(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
         }
-        
-        function importSystemDataBackup(el) {
-            const fr = new FileReader(); fr.onload = function(e) {
+
+        function importSystemDataBackup(inputEl) {
+            const file = inputEl.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
                 try {
-                    const obj = JSON.parse(e.target.result);
-                    if(obj.inventory && obj.invoices) {
-                        inventory = obj.inventory; invoices = obj.invoices; dealers = obj.dealers || []; replacements = obj.replacements || []; settingsObj = obj.settings || { nextInvoiceNum: 1 };
-                        saveStateToLocalDisk(); window.location.reload();
+                    const parsed = JSON.parse(e.target.result);
+                    if(parsed.inventory && parsed.invoices) {
+                        inventory = parsed.inventory || [];
+                        invoices = parsed.invoices || [];
+                        dealers = parsed.dealers || [];
+                        replacements = parsed.replacements || [];
+                        settingsObj = parsed.settingsObj || { nextInvoiceNum: 1 };
+
+                        saveStateToLocalDisk();
+                        alert('System database state successfully restored!');
+                        location.reload();
+                    } else {
+                        alert('Invalid backup schema structural format.');
                     }
-                } catch(err) { alert('System execution anomaly: ' + err); }
-            }; fr.readAsText(el.files[0]);
+                } catch(err) {
+                    alert('Failed to parse upload JSON file structure.');
+                }
+            };
+            reader.readAsText(file);
         }
     </script>
 </body>
