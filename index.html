@@ -171,20 +171,6 @@
                         <div class="card-value" id="dash-total-dealers">0</div>
                     </div>
                 </div>
-
-                <div class="card">
-                    <h4>Recent Consolidated Log Execution Registry</h4>
-                    <table id="dash-recent-sales-table">
-                        <thead>
-                            <tr>
-                                <th>Customer GSTIN Log</th>
-                                <th>GST Bill (No GSTIN Input)</th>
-                                <th>Non-GST Retail Bills</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
             </div>
 
             <div id="gst-track" class="view-section">
@@ -608,7 +594,8 @@
         function initClockTicker() {
             setInterval(() => {
                 const d = new Date();
-                document.getElementById('live-clock').innerText = d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+                const clockEl = document.getElementById('live-clock');
+                if(clockEl) clockEl.innerText = d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
             }, 1000);
         }
 
@@ -644,7 +631,9 @@
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.sidebar-menu li').forEach(el => el.classList.remove('active'));
             
-            document.getElementById(viewId).classList.add('active');
+            const targetView = document.getElementById(viewId);
+            if(targetView) targetView.classList.add('active');
+
             const navEl = document.getElementById('nav-' + viewId);
             if(navEl) navEl.classList.add('active');
 
@@ -659,13 +648,20 @@
             if(viewId==='replacement-logs') { titleStr = "Historical Replacement Ledger Registry Logs"; renderReplacementLogsRegistryTable(); }
             if(viewId==='ledger') { titleStr = "Corporate Supply Chain Dealer Financial Ledgers"; renderDealerModule(); }
             
-            document.getElementById('page-title').innerText = titleStr;
+            const pageTitleEl = document.getElementById('page-title');
+            if(pageTitleEl) pageTitleEl.innerText = titleStr;
             executeAlertNotificationEngines();
             renderDashboardCards();
         }
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openModal(id) { 
+            const m = document.getElementById(id);
+            if(m) m.style.display = 'flex'; 
+        }
+        function closeModal(id) { 
+            const m = document.getElementById(id);
+            if(m) m.style.display = 'none'; 
+        }
 
         function handleCategoryChange() {
             const cat = document.getElementById('modal-prod-category').value;
@@ -689,8 +685,10 @@
         }
 
         function renderInventory() {
-            const searchVal = document.getElementById('inventory-search').value.toLowerCase();
+            const searchInput = document.getElementById('inventory-search');
+            const searchVal = searchInput ? searchInput.value.toLowerCase() : '';
             const tbody = document.getElementById('inventory-table-body');
+            if(!tbody) return;
             tbody.innerHTML = '';
 
             inventory.forEach(prod => {
@@ -836,7 +834,7 @@
                         triggered = true;
                         const li = document.createElement('li');
                         li.innerHTML = `⚠️ Product Line <strong>[${p.category || 'Battery'} - ${p.brand}]</strong> running out! Units current: <span class="badge badge-danger">${p.serials.length} Units Left</span> (Alert Limit: ${p.alertLimit})`;
-                        li.onclick = function() { switchView('inventory'); document.getElementById('inventory-search').value = p.brand; renderInventory(); };
+                        li.onclick = function() { switchView('inventory'); const invSearch = document.getElementById('inventory-search'); if(invSearch) invSearch.value = p.brand; renderInventory(); };
                         dashAlertList.appendChild(li);
                     }
                 });
@@ -867,36 +865,20 @@
         }
 
         function renderDashboardCards() {
-            document.getElementById('dash-total-products').innerText = inventory.length;
-            document.getElementById('dash-total-dealers').innerText = dealers.length;
-            document.getElementById('dash-total-swaps').innerText = replacements.length + " Units";
+            const tProds = document.getElementById('dash-total-products');
+            if(tProds) tProds.innerText = inventory.length;
+
+            const tDealers = document.getElementById('dash-total-dealers');
+            if(tDealers) tDealers.innerText = dealers.length;
+
+            const tSwaps = document.getElementById('dash-total-swaps');
+            if(tSwaps) tSwaps.innerText = replacements.length + " Units";
 
             let aggregateYield = 0;
             invoices.forEach(i => { aggregateYield += i.grandTotal; });
-            document.getElementById('dash-sales-summary').innerText = '₹' + aggregateYield.toFixed(2);
+            const dSales = document.getElementById('dash-sales-summary');
+            if(dSales) dSales.innerText = '₹' + aggregateYield.toFixed(2);
 
-            const tbody = document.querySelector('#dash-recent-sales-table tbody');
-            if(tbody) {
-                tbody.innerHTML = '';
-                const b2bInvs = invoices.filter(i => i.type === 'gst' && i.customerGstin).slice(-4).reverse();
-                const b2cGst = invoices.filter(i => i.type === 'gst' && !i.customerGstin).slice(-4).reverse();
-                const b2cNonGst = invoices.filter(i => i.type === 'nongst').slice(-4).reverse();
-
-                const maxLen = Math.max(b2bInvs.length, b2cGst.length, b2cNonGst.length);
-                if(maxLen === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" class="text-center" style="color:var(--text-muted)">No real-time structural transaction committed yet.</td></tr>`;
-                    return;
-                }
-
-                for(let i=0; i<maxLen; i++) {
-                    const tr = document.createElement('tr');
-                    const td1 = b2bInvs[i] ? `Inv #${b2bInvs[i].invoiceNum} - ${b2bInvs[i].customerName}<br><strong>₹${b2bInvs[i].grandTotal.toFixed(2)}</strong>` : '-';
-                    const td2 = b2cGst[i] ? `Inv #${b2cGst[i].invoiceNum} - ${b2cGst[i].customerName}<br><strong>₹${b2cGst[i].grandTotal.toFixed(2)}</strong>` : '-';
-                    const td3 = b2cNonGst[i] ? `Slip #${b2cNonGst[i].invoiceNum} - ${b2cNonGst[i].customerName}<br><strong>₹${b2cNonGst[i].grandTotal.toFixed(2)}</strong>` : '-';
-                    tr.innerHTML = `<td>${td1}</td><td>${td2}</td><td>${td3}</td>`;
-                    tbody.appendChild(tr);
-                }
-            }
             renderGstTrackSection();
         }
 
@@ -939,23 +921,27 @@
             const todayStr = new Date().toISOString().substring(0,10);
 
             if(mode === 'gst') {
-                document.getElementById('bill-gst-invnum').value = nextNum;
-                document.getElementById('bill-gst-date').value = todayStr;
-                document.getElementById('bill-cust-name').value = '';
-                document.getElementById('bill-cust-phone').value = '';
-                document.getElementById('bill-cust-gstin').value = '';
-                document.getElementById('bill-cust-address').value = '';
-                document.getElementById('gst-product-search-input').value = '';
+                const invNumEl = document.getElementById('bill-gst-invnum');
+                if(invNumEl) invNumEl.value = nextNum;
+                const dateEl = document.getElementById('bill-gst-date');
+                if(dateEl) dateEl.value = todayStr;
+                const cName = document.getElementById('bill-cust-name'); if(cName) cName.value = '';
+                const cPhone = document.getElementById('bill-cust-phone'); if(cPhone) cPhone.value = '';
+                const cGstin = document.getElementById('bill-cust-gstin'); if(cGstin) cGstin.value = '';
+                const cAddr = document.getElementById('bill-cust-address'); if(cAddr) cAddr.value = '';
+                const searchInp = document.getElementById('gst-product-search-input'); if(searchInp) searchInp.value = '';
                 currentGstCart = [];
                 filterProductDropdown('gst');
                 renderCartTable('gst');
             } else {
-                document.getElementById('bill-nongst-invnum').value = nextNum;
-                document.getElementById('bill-nongst-date').value = todayStr;
-                document.getElementById('nongst-cust-name').value = '';
-                document.getElementById('nongst-cust-phone').value = '';
-                document.getElementById('nongst-cust-address').value = '';
-                document.getElementById('nongst-product-search-input').value = '';
+                const invNumEl2 = document.getElementById('bill-nongst-invnum');
+                if(invNumEl2) invNumEl2.value = nextNum;
+                const dateEl2 = document.getElementById('bill-nongst-date');
+                if(dateEl2) dateEl2.value = todayStr;
+                const nName = document.getElementById('nongst-cust-name'); if(nName) nName.value = '';
+                const nPhone = document.getElementById('nongst-cust-phone'); if(nPhone) nPhone.value = '';
+                const nAddr = document.getElementById('nongst-cust-address'); if(nAddr) nAddr.value = '';
+                const searchInp2 = document.getElementById('nongst-product-search-input'); if(searchInp2) searchInp2.value = '';
                 currentNonGstCart = [];
                 filterProductDropdown('nongst');
                 renderCartTable('nongst');
@@ -965,9 +951,11 @@
         function filterProductDropdown(type) {
             const inputId = type === 'gst' ? 'gst-product-search-input' : 'nongst-product-search-input';
             const selectId = type === 'gst' ? 'bill-product-select' : 'nongst-product-select';
-            const searchVal = document.getElementById(inputId).value.toLowerCase();
+            const inputEl = document.getElementById(inputId);
+            const searchVal = inputEl ? inputEl.value.toLowerCase() : '';
             const selectEl = document.getElementById(selectId);
             
+            if(!selectEl) return;
             selectEl.innerHTML = '';
             inventory.forEach(p => {
                 const cat = p.category || "Battery";
@@ -987,22 +975,25 @@
             const serialId = type === 'gst' ? 'bill-serial-select' : 'nongst-serial-select';
             const priceId = type === 'gst' ? 'bill-price' : 'nongst-price';
 
-            const pId = parseInt(document.getElementById(selectId).value);
+            const selElem = document.getElementById(selectId);
+            const pId = selElem ? parseInt(selElem.value) : 0;
             const serialSelect = document.getElementById(serialId);
             const priceInput = document.getElementById(priceId);
 
-            serialSelect.innerHTML = '';
+            if(serialSelect) serialSelect.innerHTML = '';
             if(!pId) return;
 
             const prod = inventory.find(p => p.id === pId);
             if(prod) {
-                priceInput.value = prod.price;
-                prod.serials.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s;
-                    opt.innerText = s;
-                    serialSelect.appendChild(opt);
-                });
+                if(priceInput) priceInput.value = prod.price;
+                if(serialSelect) {
+                    prod.serials.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s;
+                        opt.innerText = s;
+                        serialSelect.appendChild(opt);
+                    });
+                }
             }
         }
 
@@ -1010,9 +1001,11 @@
             const qtyId = type === 'gst' ? 'bill-qty' : 'nongst-qty';
             const serialId = type === 'gst' ? 'bill-serial-select' : 'nongst-serial-select';
             
-            const qty = parseInt(document.getElementById(qtyId).value) || 1;
+            const qtyEl = document.getElementById(qtyId);
+            const qty = qtyEl ? parseInt(qtyEl.value) || 1 : 1;
             const selectEl = document.getElementById(serialId);
             
+            if(!selectEl) return;
             for(let i=0; i<selectEl.options.length; i++) {
                 selectEl.options[i].selected = (i < qty);
             }
@@ -1024,9 +1017,13 @@
             const priceId = type === 'gst' ? 'bill-price' : 'nongst-price';
             const serialId = type === 'gst' ? 'bill-serial-select' : 'nongst-serial-select';
 
-            const pId = parseInt(document.getElementById(selectId).value);
-            const qty = parseInt(document.getElementById(qtyId).value) || 0;
-            const incPrice = parseFloat(document.getElementById(priceId).value) || 0;
+            const selElem = document.getElementById(selectId);
+            const qtyElem = document.getElementById(qtyId);
+            const priceElem = document.getElementById(priceId);
+
+            const pId = selElem ? parseInt(selElem.value) : 0;
+            const qty = qtyElem ? parseInt(qtyElem.value) || 0 : 0;
+            const incPrice = priceElem ? parseFloat(priceElem.value) || 0 : 0;
             
             if(!pId) { alert('No core product line item selected!'); return; }
             if(qty <= 0) { alert('Invalid quantity format!'); return; }
@@ -1036,9 +1033,11 @@
 
             const serialSelect = document.getElementById(serialId);
             let selectedSerials = [];
-            for (let i = 0; i < serialSelect.options.length; i++) {
-                if (serialSelect.options[i].selected) {
-                    selectedSerials.push(serialSelect.options[i].value);
+            if(serialSelect) {
+                for (let i = 0; i < serialSelect.options.length; i++) {
+                    if (serialSelect.options[i].selected) {
+                        selectedSerials.push(serialSelect.options[i].value);
+                    }
                 }
             }
 
@@ -1048,18 +1047,17 @@
             }
 
             if(selectedSerials.length !== qty) {
-                alert(`Serial key mismatch! Selected serial tags count (${selectedSerials.length}) must strictly correspond to quantity (${qty}). A single serial number cannot be billed 14 times or multiple times.`);
+                alert(`Serial key mismatch! Selected serial tags count (${selectedSerials.length}) must strictly correspond to quantity (${qty}).`);
                 return;
             }
 
-            // Check duplicate serials across cart items
             const activeCart = type === 'gst' ? currentGstCart : currentNonGstCart;
             let existingSerials = [];
             activeCart.forEach(item => { existingSerials.push(...item.serials); });
 
             for(let s of selectedSerials) {
                 if(existingSerials.includes(s)) {
-                    alert(`Error: Serial Number [${s}] pehle se hi cart me added hai. Ek serial number ek hi baar bill hoga!`);
+                    alert(`Error: Serial Number [${s}] pehle se hi cart me added hai.`);
                     return;
                 }
             }
@@ -1102,6 +1100,7 @@
         function renderCartTable(type) {
             const tbodyId = type === 'gst' ? 'gst-cart-table' : 'nongst-cart-table';
             const tbody = document.querySelector('#' + tbodyId + ' tbody');
+            if(!tbody) return;
             tbody.innerHTML = '';
 
             const activeCart = type === 'gst' ? currentGstCart : currentNonGstCart;
@@ -1128,33 +1127,41 @@
             let subTotal = 0;
             currentGstCart.forEach(i => { subTotal += i.total; });
 
-            const taxMode = document.getElementById('bill-tax-mode').value;
-            const buyback = parseFloat(document.getElementById('bill-buyback').value) || 0;
-            const paidAmt = parseFloat(document.getElementById('bill-gst-paid').value) || 0;
+            const taxModeEl = document.getElementById('bill-tax-mode');
+            const taxMode = taxModeEl ? taxModeEl.value : 'CGST_SGST';
+            const buybackEl = document.getElementById('bill-buyback');
+            const buyback = buybackEl ? parseFloat(buybackEl.value) || 0 : 0;
+            const paidEl = document.getElementById('bill-gst-paid');
+            const paidAmt = paidEl ? parseFloat(paidEl.value) || 0 : 0;
 
             const totalGst = subTotal * 0.18;
             const grandTotal = Math.round((subTotal + totalGst) - buyback);
             const outstanding = grandTotal - paidAmt;
 
-            document.getElementById('bill-subtotal').innerText = '₹' + subTotal.toFixed(2);
-            document.getElementById('bill-buyback-disp').innerText = '-₹' + buyback.toFixed(2);
-            document.getElementById('bill-grandtotal').innerText = '₹' + grandTotal.toFixed(2);
-            document.getElementById('bill-total-jama').innerText = '₹' + paidAmt.toFixed(2);
-            document.getElementById('bill-total-baki').innerText = '₹' + outstanding.toFixed(2);
+            const subTotEl = document.getElementById('bill-subtotal'); if(subTotEl) subTotEl.innerText = '₹' + subTotal.toFixed(2);
+            const bbDisp = document.getElementById('bill-buyback-disp'); if(bbDisp) bbDisp.innerText = '-₹' + buyback.toFixed(2);
+            const gTot = document.getElementById('bill-grandtotal'); if(gTot) gTot.innerText = '₹' + grandTotal.toFixed(2);
+            const tJama = document.getElementById('bill-total-jama'); if(tJama) tJama.innerText = '₹' + paidAmt.toFixed(2);
+            const tBaki = document.getElementById('bill-total-baki'); if(tBaki) tBaki.innerText = '₹' + outstanding.toFixed(2);
 
-            document.getElementById('input-total-gst').value = totalGst.toFixed(2);
+            const inTotGst = document.getElementById('input-total-gst');
+            if(inTotGst) inTotGst.value = totalGst.toFixed(2);
             
+            const cgstWrap = document.getElementById('cgst-box-wrapper');
+            const sgstWrap = document.getElementById('sgst-box-wrapper');
+            const igstWrap = document.getElementById('igst-box-wrapper');
+
             if(taxMode === 'CGST_SGST') {
-                document.getElementById('cgst-box-wrapper').style.display = 'block';
-                document.getElementById('sgst-box-wrapper').style.display = 'block';
-                document.getElementById('igst-box-wrapper').style.display = 'none';
-                document.getElementById('input-cgst').value = (totalGst / 2).toFixed(2);
-                document.getElementById('input-sgst').value = (totalGst / 2).toFixed(2);
+                if(cgstWrap) cgstWrap.style.display = 'block';
+                if(sgstWrap) sgstWrap.style.display = 'block';
+                if(igstWrap) igstWrap.style.display = 'none';
+                const inCgst = document.getElementById('input-cgst'); if(inCgst) inCgst.value = (totalGst / 2).toFixed(2);
+                const inSgst = document.getElementById('input-sgst'); if(inSgst) inSgst.value = (totalGst / 2).toFixed(2);
             } else {
-                document.getElementById('cgst-box-wrapper').style.display = 'none';
-                document.getElementById('sgst-box-wrapper').style.display = 'none';
-                document.getElementById('igst-box-wrapper').style.display = 'block';
-                document.getElementById('input-igst').value = totalGst.toFixed(2);
+                if(cgstWrap) cgstWrap.style.display = 'none';
+                if(sgstWrap) sgstWrap.style.display = 'none';
+                if(igstWrap) igstWrap.style.display = 'block';
+                const inIgst = document.getElementById('input-igst'); if(inIgst) inIgst.value = totalGst.toFixed(2);
             }
         }
 
@@ -1276,6 +1283,7 @@
 
         function generateSpoolPrintArea(inv) {
             const el = document.getElementById('invoice-print-area');
+            if(!el) return;
             
             let productRowsHtml = '';
             let hsnTaxRowsHtml = '';
@@ -1319,7 +1327,6 @@
                 `;
             });
 
-            // SINGLE PAGE FIT COMPACT HTML
             const singlePageHtml = `
                 <div class="print-page">
                     <div>
@@ -1482,11 +1489,15 @@
         }
 
         function renderInvoiceLogsRegistryTable() {
-            const b2bInvNum = document.getElementById('b2b-search-inv').value.trim();
-            const b2bSearch = document.getElementById('b2b-search').value.toLowerCase().trim();
+            const b2bInvNumEl = document.getElementById('b2b-search-inv');
+            const b2bInvNum = b2bInvNumEl ? b2bInvNumEl.value.trim() : '';
+            const b2bSearchEl = document.getElementById('b2b-search');
+            const b2bSearch = b2bSearchEl ? b2bSearchEl.value.toLowerCase().trim() : '';
 
-            const b2cInvNum = document.getElementById('b2c-search-inv').value.trim();
-            const b2cSearch = document.getElementById('b2c-search').value.toLowerCase().trim();
+            const b2cInvNumEl = document.getElementById('b2c-search-inv');
+            const b2cInvNum = b2cInvNumEl ? b2cInvNumEl.value.trim() : '';
+            const b2cSearchEl = document.getElementById('b2c-search');
+            const b2cSearch = b2cSearchEl ? b2cSearchEl.value.toLowerCase().trim() : '';
 
             const t1 = document.querySelector('#b2b-registry-table tbody');
             const t2 = document.querySelector('#b2c-registry-table tbody');
@@ -1539,35 +1550,44 @@
         }
 
         function initQuotationDesk() {
-            document.getElementById('bill-quote-date').value = new Date().toISOString().substring(0,10);
-            document.getElementById('quote-cust-name').value = '';
-            document.getElementById('quote-cust-phone').value = '';
-            document.getElementById('quote-cust-address').value = '';
+            const quoteDateEl = document.getElementById('bill-quote-date');
+            if(quoteDateEl) quoteDateEl.value = new Date().toISOString().substring(0,10);
+            const qName = document.getElementById('quote-cust-name'); if(qName) qName.value = '';
+            const qPhone = document.getElementById('quote-cust-phone'); if(qPhone) qPhone.value = '';
+            const qAddr = document.getElementById('quote-cust-address'); if(qAddr) qAddr.value = '';
             
             const sel = document.getElementById('quote-product-select');
-            sel.innerHTML = '';
-            inventory.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.innerText = `[${p.category || 'Battery'}] ${p.brand} (${p.specs})`;
-                sel.appendChild(opt);
-            });
+            if(sel) {
+                sel.innerHTML = '';
+                inventory.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = `[${p.category || 'Battery'}] ${p.brand} (${p.specs})`;
+                    sel.appendChild(opt);
+                });
+            }
             updateQuotePriceField();
             currentQuoteCart = [];
             renderQuoteCartElements();
         }
 
         function updateQuotePriceField() {
-            const pId = parseInt(document.getElementById('quote-product-select').value);
+            const qSel = document.getElementById('quote-product-select');
+            const pId = qSel ? parseInt(qSel.value) : 0;
             const prod = inventory.find(p => p.id === pId);
-            if(prod) document.getElementById('quote-price').value = prod.price;
+            const qPrice = document.getElementById('quote-price');
+            if(prod && qPrice) qPrice.value = prod.price;
         }
 
         function addItemToQuoteCart() {
-            const pId = parseInt(document.getElementById('quote-product-select').value);
-            const rate = parseFloat(document.getElementById('quote-price').value) || 0;
-            const taxPct = parseFloat(document.getElementById('quote-gst-pct').value) || 0;
-            const qty = parseInt(document.getElementById('quote-qty').value) || 1;
+            const qSel = document.getElementById('quote-product-select');
+            const pId = qSel ? parseInt(qSel.value) : 0;
+            const qPrice = document.getElementById('quote-price');
+            const rate = qPrice ? parseFloat(qPrice.value) || 0 : 0;
+            const taxPctEl = document.getElementById('quote-gst-pct');
+            const taxPct = taxPctEl ? parseFloat(taxPctEl.value) || 0 : 0;
+            const qQty = document.getElementById('quote-qty');
+            const qty = qQty ? parseInt(qQty.value) || 1 : 1;
 
             const prod = inventory.find(p => p.id === pId);
             if(!prod) return;
@@ -1592,6 +1612,7 @@
 
         function renderQuoteCartElements() {
             const tbody = document.querySelector('#quote-cart-table tbody');
+            if(!tbody) return;
             tbody.innerHTML = '';
             let totalBase = 0; let totalTax = 0;
 
@@ -1603,19 +1624,22 @@
                 tbody.appendChild(tr);
             });
 
-            const buyback = parseFloat(document.getElementById('quote-buyback').value) || 0;
+            const qBuyback = document.getElementById('quote-buyback');
+            const buyback = qBuyback ? parseFloat(qBuyback.value) || 0 : 0;
             const netTotal = (totalBase + totalTax) - buyback;
 
-            document.getElementById('quote-base-disp').innerText = '₹' + totalBase.toFixed(2);
-            document.getElementById('quote-tax-disp').innerText = '₹' + totalTax.toFixed(2);
-            document.getElementById('quote-bb-disp').innerText = '-₹' + buyback.toFixed(2);
-            document.getElementById('quote-grandtotal').innerText = '₹' + netTotal.toFixed(2);
+            const qBaseDisp = document.getElementById('quote-base-disp'); if(qBaseDisp) qBaseDisp.innerText = '₹' + totalBase.toFixed(2);
+            const qTaxDisp = document.getElementById('quote-tax-disp'); if(qTaxDisp) qTaxDisp.innerText = '₹' + totalTax.toFixed(2);
+            const qBbDisp = document.getElementById('quote-bb-disp'); if(qBbDisp) qBbDisp.innerText = '-₹' + buyback.toFixed(2);
+            const qGrand = document.getElementById('quote-grandtotal'); if(qGrand) qGrand.innerText = '₹' + netTotal.toFixed(2);
         }
 
         function printQuotationSlip() {
             if(currentQuoteCart.length===0) { alert('Proforma sheet empty.'); return; }
-            const cName = document.getElementById('quote-cust-name').value || "Prospect Corporate Account Client";
-            const qDate = document.getElementById('bill-quote-date').value;
+            const qCustName = document.getElementById('quote-cust-name');
+            const cName = qCustName ? qCustName.value || "Prospect Corporate Account Client" : "Prospect Corporate Account Client";
+            const qDateEl = document.getElementById('bill-quote-date');
+            const qDate = qDateEl ? qDateEl.value : '';
 
             let rows = '';
             currentQuoteCart.forEach((item, idx) => {
@@ -1623,6 +1647,7 @@
             });
 
             const el = document.getElementById('invoice-print-area');
+            if(!el) return;
             el.innerHTML = `<pre>
 ============================================================
               PROFORMA ESTIMATE & QUOTATION SHEET           
@@ -1647,25 +1672,28 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
         }
 
         function initWarrantyForm() {
-            document.getElementById('replace-search-serial').value = '';
-            document.getElementById('warr-cust-name').value = '';
-            document.getElementById('warr-cust-phone').value = '';
-            document.getElementById('warr-cust-address').value = '';
-            document.getElementById('warr-old-serial').value = '';
+            const rSearch = document.getElementById('replace-search-serial'); if(rSearch) rSearch.value = '';
+            const wName = document.getElementById('warr-cust-name'); if(wName) wName.value = '';
+            const wPhone = document.getElementById('warr-cust-phone'); if(wPhone) wPhone.value = '';
+            const wAddr = document.getElementById('warr-cust-address'); if(wAddr) wAddr.value = '';
+            const wOld = document.getElementById('warr-old-serial'); if(wOld) wOld.value = '';
             
             const sel = document.getElementById('warr-product-select');
-            sel.innerHTML = '';
-            inventory.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.innerText = `[${p.category || 'Battery'}] ${p.brand} (${p.specs})`;
-                sel.appendChild(opt);
-            });
+            if(sel) {
+                sel.innerHTML = '';
+                inventory.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = `[${p.category || 'Battery'}] ${p.brand} (${p.specs})`;
+                    sel.appendChild(opt);
+                });
+            }
             updateWarrantyFreshStockDropdown();
         }
 
         function lookupOldFaultyBatterySerial() {
-            const s = document.getElementById('replace-search-serial').value.trim().toLowerCase();
+            const repSearch = document.getElementById('replace-search-serial');
+            const s = repSearch ? repSearch.value.trim().toLowerCase() : '';
             if(!s) { alert('Input old tag parameter.'); return; }
 
             let found = false;
@@ -1673,11 +1701,11 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
                 inv.items.forEach(item => {
                     if(item.serials.map(x=>x.toLowerCase()).includes(s)) {
                         found = true;
-                        document.getElementById('warr-cust-name').value = inv.customerName;
-                        document.getElementById('warr-cust-phone').value = inv.customerPhone || '';
-                        document.getElementById('warr-cust-address').value = inv.customerAddress || '';
-                        document.getElementById('warr-old-serial').value = s.toUpperCase();
-                        document.getElementById('warr-product-select').value = item.productId;
+                        const wName = document.getElementById('warr-cust-name'); if(wName) wName.value = inv.customerName;
+                        const wPhone = document.getElementById('warr-cust-phone'); if(wPhone) wPhone.value = inv.customerPhone || '';
+                        const wAddr = document.getElementById('warr-cust-address'); if(wAddr) wAddr.value = inv.customerAddress || '';
+                        const wOld = document.getElementById('warr-old-serial'); if(wOld) wOld.value = s.toUpperCase();
+                        const wSel = document.getElementById('warr-product-select'); if(wSel) wSel.value = item.productId;
                         updateWarrantyFreshStockDropdown();
                     }
                 });
@@ -1686,8 +1714,10 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
         }
 
         function updateWarrantyFreshStockDropdown() {
-            const pId = parseInt(document.getElementById('warr-product-select').value);
+            const wSel = document.getElementById('warr-product-select');
+            const pId = wSel ? parseInt(wSel.value) : 0;
             const sel = document.getElementById('warr-new-serial-select');
+            if(!sel) return;
             sel.innerHTML = '';
             if(!pId) return;
 
@@ -1701,11 +1731,16 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
         }
 
         function executeProductWarrantySwapAsset() {
-            const oldSerial = document.getElementById('warr-old-serial').value.trim();
-            const pId = parseInt(document.getElementById('warr-product-select').value);
-            const newSerial = document.getElementById('warr-new-serial-select').value;
-            const remarks = document.getElementById('warr-remarks').value;
-            const cName = document.getElementById('warr-cust-name').value || "General Consumer Swap Claim";
+            const wOld = document.getElementById('warr-old-serial');
+            const oldSerial = wOld ? wOld.value.trim() : '';
+            const wSel = document.getElementById('warr-product-select');
+            const pId = wSel ? parseInt(wSel.value) : 0;
+            const wNewSel = document.getElementById('warr-new-serial-select');
+            const newSerial = wNewSel ? wNewSel.value : '';
+            const wRem = document.getElementById('warr-remarks');
+            const remarks = wRem ? wRem.value : '';
+            const wName = document.getElementById('warr-cust-name');
+            const cName = wName ? wName.value || "General Consumer Swap Claim" : "General Consumer Swap Claim";
 
             if(!oldSerial || !newSerial || !pId) { alert('Structural validation anomaly: verify asset configuration strings.'); return; }
 
@@ -1731,8 +1766,10 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
         }
 
         function renderReplacementLogsRegistryTable() {
-            const search = document.getElementById('replacements-search-input').value.toLowerCase();
+            const repSearchInp = document.getElementById('replacements-search-input');
+            const search = repSearchInp ? repSearchInp.value.toLowerCase() : '';
             const tbody = document.getElementById('replacement-logs-table-body');
+            if(!tbody) return;
             tbody.innerHTML = '';
 
             replacements.forEach(r => {
@@ -1746,6 +1783,7 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
 
         function renderDealerModule() {
             const tbody = document.getElementById('dealer-profiles-table-body');
+            if(!tbody) return;
             tbody.innerHTML = '';
             dealers.forEach(d => {
                 const tr = document.createElement('tr');
@@ -1755,8 +1793,10 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
         }
 
         function commitNewDealerProfileRecord() {
-            const t = document.getElementById('modal-dealer-title').value.trim();
-            const p = document.getElementById('modal-dealer-phone').value.trim();
+            const modalTitle = document.getElementById('modal-dealer-title');
+            const t = modalTitle ? modalTitle.value.trim() : '';
+            const modalPhone = document.getElementById('modal-dealer-phone');
+            const p = modalPhone ? modalPhone.value.trim() : '';
             if(!t) { alert('Title required'); return; }
             const newId = dealers.length > 0 ? Math.max(...dealers.map(d=>d.id)) + 1 : 1;
             dealers.push({ id: newId, title: t, phone: p, entries: [] });
@@ -1768,14 +1808,15 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
         function loadDealerLedgerToBoard(id) {
             const d = dealers.find(x=>x.id===id);
             if(!d) return;
-            document.getElementById('firmName').value = d.title;
-            document.getElementById('dealerPhone').value = d.phone;
-            document.getElementById('lblFirm').innerText = d.title;
+            const firmName = document.getElementById('firmName'); if(firmName) firmName.value = d.title;
+            const dealerPhone = document.getElementById('dealerPhone'); if(dealerPhone) dealerPhone.value = d.phone;
+            const lblFirm = document.getElementById('lblFirm'); if(lblFirm) lblFirm.innerText = d.title;
             calculateLedgerStatementEngine();
         }
 
         function appendNewBlankLedgerRow() {
             const tbody = document.getElementById('ledger-entries-body');
+            if(!tbody) return;
             const tr = document.createElement('tr');
             const todayStr = new Date().toLocaleDateString('en-GB');
             tr.innerHTML = `
@@ -1794,7 +1835,8 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
             const rows = document.querySelectorAll('#ledger-entries-body tr');
             let totalDr = 0;
             let totalCr = 0;
-            const opBal = parseFloat(document.getElementById('openingBal').value) || 0;
+            const opBalInp = document.getElementById('openingBal');
+            const opBal = opBalInp ? parseFloat(opBalInp.value) || 0 : 0;
 
             rows.forEach(tr => {
                 const tds = tr.querySelectorAll('td');
@@ -1807,8 +1849,8 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
             });
 
             const accumulated = opBal + totalDr - totalCr;
-            document.getElementById('lblOpBal').innerText = opBal.toFixed(2);
-            document.getElementById('lblAccumulated').innerText = '₹' + accumulated.toFixed(2);
+            const lblOpBal = document.getElementById('lblOpBal'); if(lblOpBal) lblOpBal.innerText = opBal.toFixed(2);
+            const lblAcc = document.getElementById('lblAccumulated'); if(lblAcc) lblAcc.innerText = '₹' + accumulated.toFixed(2);
         }
 
         function exportSystemDataBackup() {
