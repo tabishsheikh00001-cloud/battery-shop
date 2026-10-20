@@ -489,16 +489,21 @@
             <div id="ledger" class="view-section">
                 <div class="flex-between" style="margin-bottom: 15px;">
                     <h3>Corporate Supply Chain Dealer Financial Ledgers</h3>
-                    <button class="btn btn-primary" onclick="openModal('ledger-modal')">+ Register Supplier Entity Profile</button>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="select-dealer-dropdown" class="form-control" style="width: 220px;" onchange="onSelectDealerDropdownChange(this.value)">
+                            <option value="">-- Select Profile --</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="openModal('ledger-modal')">+ Register Supplier Entity Profile</button>
+                    </div>
                 </div>
                 <div class="ledger-form-grid">
-                    <div class="form-group" style="margin-bottom:0;"><label>Firm Name</label><input type="text" id="firmName" class="form-control" value="ALFA BATTERIES"></div>
-                    <div class="form-group" style="margin-bottom:0;"><label>Contact Mobile Line</label><input type="text" id="dealerPhone" class="form-control"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>Firm Name</label><input type="text" id="firmName" class="form-control" placeholder="Enter Firm Name"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>Contact Mobile Line</label><input type="text" id="dealerPhone" class="form-control" placeholder="Enter Phone"></div>
                     <div class="form-group" style="margin-bottom:0;"><label>Opening Principal Bal (₹)</label><input type="number" id="openingBal" class="form-control" value="0"></div>
                     <div class="form-group" style="margin-bottom:0; display:flex; align-items:flex-end;"><button class="btn btn-success" style="width:100%;" onclick="calculateLedgerStatementEngine()">Regenerate Statement Matrix</button></div>
                 </div>
                 <div class="dealer-info-banner">
-                    <div><strong>Active Selected Firm Name:</strong> <span id="lblFirm">ALFA BATTERIES</span></div>
+                    <div><strong>Active Selected Firm Name:</strong> <span id="lblFirm">-</span></div>
                     <div><strong>Opening Base Balance:</strong> ₹<span id="lblOpBal">0.00</span></div>
                     <div><strong>Net Accumulation:</strong> <span id="lblAccumulated" style="font-weight:700;">₹0.00</span></div>
                 </div>
@@ -509,7 +514,7 @@
                     </div>
                     <table class="ledger-main-table">
                         <thead>
-                            <tr><th>Date (DD-MM-YYYY)</th><th>Particulars / Log Description</th><th>Voucher Type</th><th>Instrument No.</th><th>Debit Amount (Dr) (₹)</th><th>Credit Amount (Cr) (₹)</th><th>Action</th></tr>
+                            <tr><th>Date (DD-MM-YYYY)</th><th>Particulars / Log Description</th><th>Voucher Type</th><th>Instrument No. / Vch No.</th><th>Debit Amount (Dr) (₹)</th><th>Credit Amount (Cr) (₹)</th><th>Action</th></tr>
                         </thead>
                         <tbody id="ledger-entries-body"></tbody>
                     </table>
@@ -581,6 +586,7 @@
         let currentGstCart = [];
         let currentNonGstCart = [];
         let currentQuoteCart = [];
+        let activeSelectedDealerId = null;
 
         window.onload = function() {
             loadStateFromLocalDisk();
@@ -1783,13 +1789,82 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
 
         function renderDealerModule() {
             const tbody = document.getElementById('dealer-profiles-table-body');
-            if(!tbody) return;
+            const selectDropdown = document.getElementById('select-dealer-dropdown');
+            if(!tbody || !selectDropdown) return;
+
             tbody.innerHTML = '';
+            selectDropdown.innerHTML = '<option value="">-- Select Profile --</option>';
+
             dealers.forEach(d => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td>${d.id}</td><td><strong>${d.title}</strong></td><td>${d.phone}</td><td><button class="btn btn-primary" style="padding:2px 6px; font-size:11px;" onclick="loadDealerLedgerToBoard(${d.id})">Select Profile</button></td>`;
                 tbody.appendChild(tr);
+
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.innerText = d.title;
+                selectDropdown.appendChild(opt);
             });
+
+            if(activeSelectedDealerId) {
+                selectDropdown.value = activeSelectedDealerId;
+                loadDealerLedgerToBoard(activeSelectedDealerId);
+            } else {
+                clearDealerLedgerBoard();
+            }
+        }
+
+        function onSelectDealerDropdownChange(val) {
+            if(!val) {
+                activeSelectedDealerId = null;
+                clearDealerLedgerBoard();
+            } else {
+                loadDealerLedgerToBoard(parseInt(val));
+            }
+        }
+
+        function clearDealerLedgerBoard() {
+            activeSelectedDealerId = null;
+            const firmName = document.getElementById('firmName'); if(firmName) firmName.value = '';
+            const dealerPhone = document.getElementById('dealerPhone'); if(dealerPhone) dealerPhone.value = '';
+            const openingBal = document.getElementById('openingBal'); if(openingBal) openingBal.value = '0';
+            const lblFirm = document.getElementById('lblFirm'); if(lblFirm) lblFirm.innerText = '-';
+            const tbody = document.getElementById('ledger-entries-body');
+            if(tbody) tbody.innerHTML = '';
+            calculateLedgerStatementEngine();
+        }
+
+        function loadDealerLedgerToBoard(id) {
+            const d = dealers.find(x=>x.id===id);
+            if(!d) return;
+            activeSelectedDealerId = d.id;
+            const selectDropdown = document.getElementById('select-dealer-dropdown');
+            if(selectDropdown) selectDropdown.value = d.id;
+
+            const firmName = document.getElementById('firmName'); if(firmName) firmName.value = d.title;
+            const dealerPhone = document.getElementById('dealerPhone'); if(dealerPhone) dealerPhone.value = d.phone;
+            const lblFirm = document.getElementById('lblFirm'); if(lblFirm) lblFirm.innerText = d.title;
+
+            const tbody = document.getElementById('ledger-entries-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            if(d.entries && d.entries.length > 0) {
+                d.entries.forEach(entry => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td contenteditable="true">${entry.date}</td>
+                        <td contenteditable="true">${entry.particulars}</td>
+                        <td contenteditable="true">${entry.vchType}</td>
+                        <td contenteditable="true">${entry.vchNo}</td>
+                        <td contenteditable="true" class="text-right">${entry.debit.toFixed(2)}</td>
+                        <td contenteditable="true" class="text-right">${entry.credit.toFixed(2)}</td>
+                        <td><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="this.closest('tr').remove(); calculateLedgerStatementEngine();">X</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            calculateLedgerStatementEngine();
         }
 
         function commitNewDealerProfileRecord() {
@@ -1802,28 +1877,22 @@ NET PROFORMA VALUE PROJECTION   : ${document.getElementById('quote-grandtotal').
             dealers.push({ id: newId, title: t, phone: p, entries: [] });
             saveStateToLocalDisk();
             closeModal('ledger-modal');
+            modalTitle.value = '';
+            modalPhone.value = '';
+            activeSelectedDealerId = newId;
             renderDealerModule();
-        }
-
-        function loadDealerLedgerToBoard(id) {
-            const d = dealers.find(x=>x.id===id);
-            if(!d) return;
-            const firmName = document.getElementById('firmName'); if(firmName) firmName.value = d.title;
-            const dealerPhone = document.getElementById('dealerPhone'); if(dealerPhone) dealerPhone.value = d.phone;
-            const lblFirm = document.getElementById('lblFirm'); if(lblFirm) lblFirm.innerText = d.title;
-            calculateLedgerStatementEngine();
         }
 
         function appendNewBlankLedgerRow() {
             const tbody = document.getElementById('ledger-entries-body');
             if(!tbody) return;
             const tr = document.createElement('tr');
-            const todayStr = new Date().toLocaleDateString('en-GB');
+            const todayStr = new Date().toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: '2-digit'}).replace(/ /g, '-');
             tr.innerHTML = `
                 <td contenteditable="true">${todayStr}</td>
-                <td contenteditable="true">Purchase Stock Batch</td>
-                <td contenteditable="true">Purchase</td>
-                <td contenteditable="true">INV-${Math.floor(Math.random()*9000+1000)}</td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true">Sales</td>
+                <td contenteditable="true"></td>
                 <td contenteditable="true" class="text-right">0.00</td>
                 <td contenteditable="true" class="text-right">0.00</td>
                 <td><button class="btn btn-danger" style="padding:2px 6px; font-size:11px;" onclick="this.closest('tr').remove(); calculateLedgerStatementEngine();">X</button></td>
